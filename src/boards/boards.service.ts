@@ -22,8 +22,10 @@ export class BoardsService {
     }
   }
 
-  findAll() {
-    return `This action returns all boards`;
+  async findAll(): Promise<Board[]> {
+    const boards = await Board.find();
+
+    return boards;
   }
 
   findOne(id: number) {

@@ -23,8 +23,10 @@ export class BoardsController {
   }
 
   @Get()
-  findAll() {
-    return this.boardsService.findAll();
+  async findAll() {
+    const boards = await this.boardsService.findAll();
+
+    return boards;
   }
 
   @Get(':id')
