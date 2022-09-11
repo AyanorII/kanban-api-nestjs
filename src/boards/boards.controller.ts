@@ -11,6 +11,7 @@ import {
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { EntityNotFoundError } from 'typeorm';
 
 @Controller('boards')
 export class BoardsController {
@@ -41,8 +42,18 @@ export class BoardsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBoardDto: UpdateBoardDto) {
-    return this.boardsService.update(+id, updateBoardDto);
+  async update(
+    @Param('id') id: number,
+    @Body() updateBoardDto: UpdateBoardDto,
+  ) {
+    try {
+      const board = await this.boardsService.update(id, updateBoardDto);
+      return board;
+    } catch (err) {
+      if (err instanceof EntityNotFoundError) {
+        throw new NotFoundException(`Board with ID: ${id} not found`);
+      }
+    }
   }
 
   @Delete(':id')
