@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -30,8 +31,13 @@ export class BoardsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.boardsService.findOne(+id);
+  async findOne(@Param('id') id: number) {
+    try {
+      const board = await this.boardsService.findOne(id);
+      return board;
+    } catch (err) {
+      throw new NotFoundException(`Board with ID: ${id} not found`);
+    }
   }
 
   @Patch(':id')

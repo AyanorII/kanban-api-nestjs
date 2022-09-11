@@ -28,8 +28,10 @@ export class BoardsService {
     return boards;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} board`;
+  async findOne(id: number): Promise<Board> {
+    const board = await Board.findOneOrFail({ where: { id } });
+
+    return board;
   }
 
   update(id: number, updateBoardDto: UpdateBoardDto) {
