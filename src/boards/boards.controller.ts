@@ -16,8 +16,10 @@ export class BoardsController {
   constructor(private readonly boardsService: BoardsService) {}
 
   @Post()
-  create(@Body() createBoardDto: CreateBoardDto) {
-    return this.boardsService.create(createBoardDto);
+  async create(@Body() createBoardDto: CreateBoardDto) {
+    const board = await this.boardsService.create(createBoardDto);
+
+    return board;
   }
 
   @Get()
