@@ -4,9 +4,10 @@ import { config } from 'ormconfig';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BoardsModule } from './boards/boards.module';
+import { ColumnsModule } from './columns/columns.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(config), BoardsModule],
+  imports: [TypeOrmModule.forRoot(config), BoardsModule, ColumnsModule],
   controllers: [AppController],
   providers: [AppService],
 })
