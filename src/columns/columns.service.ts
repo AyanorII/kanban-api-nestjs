@@ -26,8 +26,10 @@ export class ColumnsService {
     return columns;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} column`;
+  async findOne(id: number): Promise<Column> {
+    const column = await Column.findOneOrFail({ where: { id } });
+
+    return column;
   }
 
   update(id: number, updateColumnDto: UpdateColumnDto) {

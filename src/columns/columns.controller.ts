@@ -36,8 +36,13 @@ export class ColumnsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.columnsService.findOne(+id);
+  async findOne(@Param('id') id: number) {
+    try {
+      const column = await this.columnsService.findOne(id);
+      return column;
+    } catch (err) {
+      throw new NotFoundException(`Column with ID: ${id} not found`);
+    }
   }
 
   @Patch(':id')
