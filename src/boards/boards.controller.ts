@@ -57,7 +57,12 @@ export class BoardsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.boardsService.remove(+id);
+  async remove(@Param('id') id: number) {
+    try {
+      const board = await this.boardsService.remove(id);
+      return board;
+    } catch (err) {
+      throw new NotFoundException(`Board with ID: ${id} not found`);
+    }
   }
 }
