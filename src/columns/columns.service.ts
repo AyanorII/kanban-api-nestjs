@@ -1,11 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
+import { Column } from './entities/column.entity';
+import { Board } from '../boards/entities/board.entity';
 
 @Injectable()
 export class ColumnsService {
-  create(createColumnDto: CreateColumnDto) {
-    return 'This action adds a new column';
+  async create(createColumnDto: CreateColumnDto): Promise<Column> {
+    const { name, boardId } = createColumnDto;
+
+    const column = await new Column();
+    const board = await Board.findOneOrFail({ where: { id: boardId } });
+
+    column.name = name;
+    column.board = board;
+
+    await column.save();
+
+    return column;
   }
 
   findAll() {

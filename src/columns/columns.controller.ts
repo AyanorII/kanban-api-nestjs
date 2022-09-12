@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
@@ -8,8 +17,15 @@ export class ColumnsController {
   constructor(private readonly columnsService: ColumnsService) {}
 
   @Post()
-  create(@Body() createColumnDto: CreateColumnDto) {
-    return this.columnsService.create(createColumnDto);
+  async create(@Body() createColumnDto: CreateColumnDto) {
+    const { boardId } = createColumnDto;
+
+    try {
+      const column = await this.columnsService.create(createColumnDto);
+      return column;
+    } catch (err) {
+      throw new NotFoundException(`Board with ID: ${boardId} not found`);
+    }
   }
 
   @Get()
