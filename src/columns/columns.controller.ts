@@ -29,8 +29,10 @@ export class ColumnsController {
   }
 
   @Get()
-  findAll() {
-    return this.columnsService.findAll();
+  async findAll() {
+    const columns = await this.columnsService.findAll();
+
+    return columns;
   }
 
   @Get(':id')

@@ -20,8 +20,10 @@ export class ColumnsService {
     return column;
   }
 
-  findAll() {
-    return `This action returns all columns`;
+  async findAll(): Promise<Column[]> {
+    const columns = await Column.find();
+
+    return columns;
   }
 
   findOne(id: number) {
