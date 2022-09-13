@@ -15,6 +15,9 @@ export class Board extends BaseEntity {
   @TableColumn()
   name: string;
 
-  @OneToMany(() => Column, (column) => column.board)
+  @OneToMany(() => Column, (column) => column.board, {
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete',
+  })
   columns: Column[];
 }
