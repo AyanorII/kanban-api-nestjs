@@ -29,7 +29,10 @@ export class BoardsService {
   }
 
   async findOne(id: number): Promise<Board> {
-    const board = await Board.findOneOrFail({ where: { id } });
+    const board = await Board.findOneOrFail({
+      where: { id },
+      relations: ['columns'],
+    });
 
     return board;
   }
