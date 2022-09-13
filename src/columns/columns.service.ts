@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Board } from '../boards/entities/board.entity';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
 import { Column } from './entities/column.entity';
-import { Board } from '../boards/entities/board.entity';
 
 @Injectable()
 export class ColumnsService {
@@ -27,7 +27,10 @@ export class ColumnsService {
   }
 
   async findOne(id: number): Promise<Column> {
-    const column = await Column.findOneOrFail({ where: { id } });
+    const column = await Column.findOneOrFail({
+      where: { id },
+      relations: ['Board'],
+    });
 
     return column;
   }
