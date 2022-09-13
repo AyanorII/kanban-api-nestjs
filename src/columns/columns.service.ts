@@ -29,14 +29,24 @@ export class ColumnsService {
   async findOne(id: number): Promise<Column> {
     const column = await Column.findOneOrFail({
       where: { id },
-      relations: ['Board'],
+      relations: ['board'],
     });
 
     return column;
   }
 
-  update(id: number, updateColumnDto: UpdateColumnDto) {
-    return `This action updates a #${id} column`;
+  async update(id: number, updateColumnDto: UpdateColumnDto): Promise<Column> {
+    const { name, boardId } = updateColumnDto;
+
+    const column = await Column.findOneOrFail({ where: { id } });
+    const board = await Board.findOneOrFail({ where: { id: boardId } });
+
+    column.name = name;
+    column.board = board;
+
+    await column.save();
+
+    return column;
   }
 
   remove(id: number) {

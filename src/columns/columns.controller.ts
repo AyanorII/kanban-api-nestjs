@@ -8,6 +8,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { EntityNotFoundError } from 'typeorm';
+import { Board } from '../boards/entities/board.entity';
 import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
@@ -46,8 +48,13 @@ export class ColumnsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateColumnDto: UpdateColumnDto) {
-    return this.columnsService.update(+id, updateColumnDto);
+  async update(
+    @Param('id') id: number,
+    @Body() updateColumnDto: UpdateColumnDto,
+  ) {
+    const column = await this.columnsService.update(id, updateColumnDto);
+    
+    return column;
   }
 
   @Delete(':id')
