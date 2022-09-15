@@ -22,7 +22,7 @@ export class TasksController {
   }
 
   @Get()
-  findAll() {
+  async findAll(): Promise<Task[]> {
     return this.tasksService.findAll();
   }
 

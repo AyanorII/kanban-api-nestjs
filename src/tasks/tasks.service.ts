@@ -20,8 +20,8 @@ export class TasksService {
     return task;
   }
 
-  findAll() {
-    return `This action returns all tasks`;
+  async findAll(): Promise<Task[]> {
+    return Task.find();
   }
 
   findOne(id: number) {
