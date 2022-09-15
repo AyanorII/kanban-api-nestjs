@@ -5,9 +5,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(config), BoardsModule, ColumnsModule],
+  imports: [
+    TypeOrmModule.forRoot(config),
+    BoardsModule,
+    ColumnsModule,
+    TasksModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
