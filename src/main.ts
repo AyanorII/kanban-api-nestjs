@@ -20,8 +20,6 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new EntityNotFoundExceptionFilter());
-
   await app.listen(8080);
 }
 bootstrap();
