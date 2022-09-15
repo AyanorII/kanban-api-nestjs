@@ -27,10 +27,14 @@ export class ColumnsService {
   }
 
   async findOne(id: number): Promise<Column> {
-    const column = await Column.findOneOrFail({
+    const column = await Column.findOne({
       where: { id },
       relations: ['board'],
     });
+
+    if (!column) {
+      throw new NotFoundException(`Column with ID: ${id} not found.`)
+    }
 
     return column;
   }

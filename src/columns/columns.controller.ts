@@ -39,12 +39,7 @@ export class ColumnsController {
 
   @Get(':id')
   async findOne(@Param('id') id: number) {
-    try {
-      const column = await this.columnsService.findOne(id);
-      return column;
-    } catch (err) {
-      throw new NotFoundException(`Column with ID: ${id} not found`);
-    }
+    return this.columnsService.findOne(id);
   }
 
   @Patch(':id')
@@ -53,7 +48,7 @@ export class ColumnsController {
     @Body() updateColumnDto: UpdateColumnDto,
   ) {
     const column = await this.columnsService.update(id, updateColumnDto);
-    
+
     return column;
   }
 
