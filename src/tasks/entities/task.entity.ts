@@ -23,6 +23,7 @@ export class Task extends BaseEntity {
 
   @ManyToOne(() => Column, (column) => column.tasks, {
     onDelete: 'CASCADE',
+    eager: true,
   })
   column: Column;
 }
