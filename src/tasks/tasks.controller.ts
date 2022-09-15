@@ -27,8 +27,8 @@ export class TasksController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(+id);
+  async findOne(@Param('id') id: number): Promise<Task> {
+    return this.tasksService.findOne(id);
   }
 
   @Patch(':id')

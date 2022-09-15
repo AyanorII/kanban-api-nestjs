@@ -24,8 +24,14 @@ export class TasksService {
     return Task.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
+  async findOne(id: number): Promise<Task> {
+    const task = await Task.findOne({ where: { id } });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID: '${id}' not found.`);
+    }
+
+    return task;
   }
 
   update(id: number, updateTaskDto: UpdateTaskDto) {
