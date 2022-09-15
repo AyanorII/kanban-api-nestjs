@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Board } from '../boards/entities/board.entity';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
@@ -38,14 +38,30 @@ export class ColumnsService {
   async update(id: number, updateColumnDto: UpdateColumnDto): Promise<Column> {
     const { name, boardId } = updateColumnDto;
 
-    const column = await Column.findOneOrFail({ where: { id } });
-    const board = await Board.findOneOrFail({ where: { id: boardId } });
+    const column = await Column.findOne({
+      where: { id },
+      relations: ['board'],
+    });
 
-    column.name = name;
-    column.board = board;
+    if (!column) {
+      throw new NotFoundException(`Column with ID: '${id}' not found.`);
+    }
+
+    if (name) {
+      column.name = name;
+    }
+
+    if (boardId) {
+      const board = await Board.findOne({ where: { id: boardId } });
+
+      if (!board) {
+        throw new NotFoundException(`Board with ID: '${boardId}' not found.`);
+      }
+
+      column.board = board;
+    }
 
     await column.save();
-
     return column;
   }
 
