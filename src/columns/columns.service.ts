@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { BoardsService } from '../boards/boards.service';
 import { Board } from '../boards/entities/board.entity';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
@@ -6,6 +7,8 @@ import { Column } from './entities/column.entity';
 
 @Injectable()
 export class ColumnsService {
+  constructor(private boardsService: BoardsService) {}
+
   async create(createColumnDto: CreateColumnDto): Promise<Column> {
     const { name, boardId } = createColumnDto;
 
@@ -33,7 +36,7 @@ export class ColumnsService {
     });
 
     if (!column) {
-      throw new NotFoundException(`Column with ID: ${id} not found.`)
+      throw new NotFoundException(`Column with ID: ${id} not found.`);
     }
 
     return column;
@@ -41,35 +44,16 @@ export class ColumnsService {
 
   async update(id: number, updateColumnDto: UpdateColumnDto): Promise<Column> {
     const { name, boardId } = updateColumnDto;
+    const board = await this.boardsService.findOne(boardId);
 
-    const column = await Column.findOne({
-      where: { id },
-      relations: ['board'],
-    });
+    await Column.update(id, { name, board });
+    const column = await this.findOne(id);
 
-    if (!column) {
-      throw new NotFoundException(`Column with ID: '${id}' not found.`);
-    }
-
-    if (name) {
-      column.name = name;
-    }
-
-    if (boardId) {
-      const board = await Board.findOne({ where: { id: boardId } });
-
-      if (!board) {
-        throw new NotFoundException(`Board with ID: '${boardId}' not found.`);
-      }
-
-      column.board = board;
-    }
-
-    await column.save();
     return column;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} column`;
+  async remove(id: number): Promise<void> {
+    const column = await this.findOne(id);
+    await column.remove();
   }
 }

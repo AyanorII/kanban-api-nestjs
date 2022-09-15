@@ -3,23 +3,23 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
-import { EntityNotFoundError } from 'typeorm';
-import { Board } from '../boards/entities/board.entity';
 import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
+import { Column } from './entities/column.entity';
 
 @Controller('columns')
 export class ColumnsController {
   constructor(private readonly columnsService: ColumnsService) {}
 
   @Post()
-  async create(@Body() createColumnDto: CreateColumnDto) {
+  async create(@Body() createColumnDto: CreateColumnDto): Promise<Column> {
     const { boardId } = createColumnDto;
 
     try {
@@ -31,14 +31,14 @@ export class ColumnsController {
   }
 
   @Get()
-  async findAll() {
+  async findAll(): Promise<Column[]> {
     const columns = await this.columnsService.findAll();
 
     return columns;
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id') id: number): Promise<Column> {
     return this.columnsService.findOne(id);
   }
 
@@ -46,14 +46,15 @@ export class ColumnsController {
   async update(
     @Param('id') id: number,
     @Body() updateColumnDto: UpdateColumnDto,
-  ) {
+  ): Promise<Column> {
     const column = await this.columnsService.update(id, updateColumnDto);
 
     return column;
   }
 
+  @HttpCode(204)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.columnsService.remove(+id);
+  async remove(@Param('id') id: number): Promise<void> {
+    return this.columnsService.remove(id);
   }
 }

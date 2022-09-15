@@ -1,5 +1,5 @@
 import { validate } from '@nestjs/class-validator';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Board } from './entities/board.entity';
@@ -29,10 +29,14 @@ export class BoardsService {
   }
 
   async findOne(id: number): Promise<Board> {
-    const board = await Board.findOneOrFail({
+    const board = await Board.findOne({
       where: { id },
       relations: ['columns'],
     });
+
+    if (!board) {
+      throw new NotFoundException(`Board with ID: ${id} not found.`);
+    }
 
     return board;
   }
@@ -40,7 +44,7 @@ export class BoardsService {
   async update(id: number, updateBoardDto: UpdateBoardDto): Promise<Board> {
     const { name } = updateBoardDto;
 
-    const board = await Board.findOneOrFail({ where: { id } });
+    const board = await this.findOne(id);
 
     board.name = name;
     await board.save();
@@ -48,10 +52,8 @@ export class BoardsService {
   }
 
   async remove(id: number): Promise<Board> {
-    const board = await Board.findOneOrFail({ where: { id } });
-
+    const board = await this.findOne(id);
     await board.remove();
-
     return board;
   }
 }
