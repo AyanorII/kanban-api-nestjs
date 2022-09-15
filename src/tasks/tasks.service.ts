@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { UpdateValuesMissingError } from 'typeorm';
 import { Column } from '../columns/entities/column.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -28,14 +33,28 @@ export class TasksService {
     const task = await Task.findOne({ where: { id } });
 
     if (!task) {
-      throw new NotFoundException(`Task with ID: '${id}' not found.`);
+      throw new NotFoundException(`Task with ID: ${id} not found.`);
     }
 
     return task;
   }
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+  async updateTitleAndDescription(
+    id: number,
+    updateTaskDto: UpdateTaskDto,
+  ): Promise<Task> {
+    const { title, description } = updateTaskDto;
+
+    try {
+      await Task.update(id, { title, description });
+      const task = await this.findOne(id);
+
+      return task;
+    } catch (err) {
+      if (err instanceof UpdateValuesMissingError) {
+        throw new BadRequestException(err.message.split('.')[0]);
+      }
+    }
   }
 
   remove(id: number) {
