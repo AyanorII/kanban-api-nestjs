@@ -3,10 +3,12 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiNoContentResponse } from '@nestjs/swagger';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
 import { UpdateTaskTitleDescription } from './dto/update-title-description.dto';
@@ -36,7 +38,7 @@ export class TasksController {
   async updateTitleAndDescription(
     @Param('id') id: number,
     @Body() updateTaskDto: UpdateTaskTitleDescription,
-  ) {
+  ): Promise<Task> {
     return this.tasksService.updateTitleAndDescription(id, updateTaskDto);
   }
 
@@ -44,12 +46,14 @@ export class TasksController {
   async updateStatusAndColumn(
     @Param('id') id: number,
     @Body() updateTaskDto: UpdateTaskStatusColumn,
-  ) {
+  ): Promise<Task> {
     return this.tasksService.updateStatusAndColumn(id, updateTaskDto);
   }
 
+  @ApiNoContentResponse()
+  @HttpCode(204)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tasksService.remove(+id);
+  async remove(@Param('id') id: number): Promise<void> {
+    return this.tasksService.remove(id);
   }
 }
