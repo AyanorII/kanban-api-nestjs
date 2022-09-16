@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TasksService } from '../tasks/tasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
@@ -23,8 +23,17 @@ export class SubtasksService {
     return Subtask.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} subtask`;
+  async findOne(id: number): Promise<Subtask> {
+    const subtask = await Subtask.findOne({
+      where: { id },
+      relations: ['task'],
+    });
+
+    if (!subtask) {
+      throw new NotFoundException(`Subtask with ID: ${id} not found.`);
+    }
+
+    return subtask;
   }
 
   update(id: number, updateSubtaskDto: UpdateSubtaskDto) {

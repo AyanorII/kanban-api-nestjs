@@ -27,8 +27,8 @@ export class SubtasksController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subtasksService.findOne(+id);
+  async findOne(@Param('id') id: number): Promise<Subtask> {
+    return this.subtasksService.findOne(id);
   }
 
   @Patch(':id')
