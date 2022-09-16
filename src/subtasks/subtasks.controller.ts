@@ -3,10 +3,12 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiNoContentResponse } from '@nestjs/swagger';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { Subtask } from './entities/subtask.entity';
@@ -39,8 +41,10 @@ export class SubtasksController {
     return this.subtasksService.update(id, updateSubtaskDto);
   }
 
+  @HttpCode(204)
+  @ApiNoContentResponse()
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.subtasksService.remove(+id);
+  async remove(@Param('id') id: number): Promise<void> {
+    return this.subtasksService.remove(id);
   }
 }

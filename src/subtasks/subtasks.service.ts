@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpCode, Injectable, NotFoundException } from '@nestjs/common';
 import { TasksService } from '../tasks/tasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
@@ -51,7 +51,8 @@ export class SubtasksService {
     return subtask;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} subtask`;
+  async remove(id: number): Promise<void> {
+    const subtask = await this.findOne(id);
+    await subtask.remove();
   }
 }
