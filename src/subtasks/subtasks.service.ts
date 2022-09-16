@@ -1,11 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { TasksService } from '../tasks/tasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
+import { Subtask } from './entities/subtask.entity';
 
 @Injectable()
 export class SubtasksService {
-  create(createSubtaskDto: CreateSubtaskDto) {
-    return 'This action adds a new subtask';
+  constructor(private tasksService: TasksService) {}
+  async create(createSubtaskDto: CreateSubtaskDto): Promise<Subtask> {
+    const { title, completed, taskId } = createSubtaskDto;
+
+    const task = await this.tasksService.findOne(taskId);
+
+    const subtask = Subtask.create({ title, completed, task });
+    await subtask.save();
+
+    return subtask;
   }
 
   findAll() {

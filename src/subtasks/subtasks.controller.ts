@@ -1,14 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SubtasksService } from './subtasks.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
+import { SubtasksService } from './subtasks.service';
+import { Subtask } from './entities/subtask.entity';
 
 @Controller('subtasks')
 export class SubtasksController {
   constructor(private readonly subtasksService: SubtasksService) {}
 
   @Post()
-  create(@Body() createSubtaskDto: CreateSubtaskDto) {
+  async create(@Body() createSubtaskDto: CreateSubtaskDto): Promise<Subtask> {
     return this.subtasksService.create(createSubtaskDto);
   }
 
