@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
-import { SubtasksService } from './subtasks.service';
 import { Subtask } from './entities/subtask.entity';
+import { SubtasksService } from './subtasks.service';
 
 @Controller('subtasks')
 export class SubtasksController {
@@ -32,8 +32,11 @@ export class SubtasksController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSubtaskDto: UpdateSubtaskDto) {
-    return this.subtasksService.update(+id, updateSubtaskDto);
+  async update(
+    @Param('id') id: number,
+    @Body() updateSubtaskDto: UpdateSubtaskDto,
+  ): Promise<Subtask> {
+    return this.subtasksService.update(id, updateSubtaskDto);
   }
 
   @Delete(':id')

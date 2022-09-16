@@ -36,8 +36,19 @@ export class SubtasksService {
     return subtask;
   }
 
-  update(id: number, updateSubtaskDto: UpdateSubtaskDto) {
-    return `This action updates a #${id} subtask`;
+  async update(
+    id: number,
+    updateSubtaskDto: UpdateSubtaskDto,
+  ): Promise<Subtask> {
+    const { title, completed, taskId } = updateSubtaskDto;
+
+    const task = await this.tasksService.findOne(taskId);
+
+    await Subtask.update(id, { title, completed, task });
+    const subtask = await this.findOne(id);
+    await subtask.save();
+
+    return subtask;
   }
 
   remove(id: number) {
