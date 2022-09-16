@@ -4,8 +4,10 @@ import {
   Column as TableColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Subtask } from '../../subtasks/entities/subtask.entity';
 
 @Entity()
 export class Task extends BaseEntity {
@@ -26,4 +28,7 @@ export class Task extends BaseEntity {
     eager: true,
   })
   column: Column;
+
+  @OneToMany(() => Subtask, (subtask) => subtask.task)
+  subtasks: Subtask[];
 }
