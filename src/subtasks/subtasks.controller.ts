@@ -22,7 +22,7 @@ export class SubtasksController {
   }
 
   @Get()
-  findAll() {
+  async findAll(): Promise<Subtask[]> {
     return this.subtasksService.findAll();
   }
 

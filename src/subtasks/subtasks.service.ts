@@ -7,6 +7,7 @@ import { Subtask } from './entities/subtask.entity';
 @Injectable()
 export class SubtasksService {
   constructor(private tasksService: TasksService) {}
+
   async create(createSubtaskDto: CreateSubtaskDto): Promise<Subtask> {
     const { title, completed, taskId } = createSubtaskDto;
 
@@ -18,8 +19,8 @@ export class SubtasksService {
     return subtask;
   }
 
-  findAll() {
-    return `This action returns all subtasks`;
+  async findAll(): Promise<Subtask[]> {
+    return Subtask.find();
   }
 
   findOne(id: number) {
