@@ -1,17 +1,23 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { config } from 'ormconfig';
+import { ormConfig } from 'ormconfig';
+import { configSchemaValidation } from '../config.schema';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
-import { TasksModule } from './tasks/tasks.module';
-import { SubtasksModule } from './subtasks/subtasks.module';
 import { SeedModule } from './seed/seed.module';
+import { SubtasksModule } from './subtasks/subtasks.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(config),
+    ConfigModule.forRoot({
+      envFilePath: ['.env'],
+      validationSchema: configSchemaValidation,
+    }),
+    TypeOrmModule.forRootAsync(ormConfig),
     BoardsModule,
     ColumnsModule,
     TasksModule,
