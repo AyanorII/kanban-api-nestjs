@@ -67,4 +67,8 @@ export class ColumnsService {
     const column = await this.findOne(id);
     await column.remove();
   }
+
+  async findColumnTasks(columnId: number): Promise<Task[]> {
+    return this.tasksService.findColumnTasks(columnId);
+  }
 }

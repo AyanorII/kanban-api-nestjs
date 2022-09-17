@@ -100,4 +100,13 @@ export class TasksService {
     const task = await this.findOne(id);
     await task.remove();
   }
+
+  async findColumnTasks(columnId: number): Promise<Task[]> {
+    const column = await this.columnsService.findOne(columnId);
+
+    const query = Task.createQueryBuilder('task');
+    query.where({ column });
+    const tasks = await query.getMany();
+    return tasks;
+  }
 }

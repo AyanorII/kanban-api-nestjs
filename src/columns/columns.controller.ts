@@ -13,10 +13,15 @@ import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
 import { Column } from './entities/column.entity';
+import { Task } from '../tasks/entities/task.entity';
+import { TasksService } from '../tasks/tasks.service';
 
 @Controller('columns')
 export class ColumnsController {
-  constructor(private readonly columnsService: ColumnsService) {}
+  constructor(
+    private columnsService: ColumnsService,
+    private tasksService: TasksService,
+  ) {}
 
   @Post()
   async create(@Body() createColumnDto: CreateColumnDto): Promise<Column> {
@@ -56,5 +61,10 @@ export class ColumnsController {
   @Delete(':id')
   async remove(@Param('id') id: number): Promise<void> {
     return this.columnsService.remove(id);
+  }
+
+  @Get(':id/tasks')
+  async findColumnTasks(@Param('id') id: number): Promise<Task[]> {
+    return this.tasksService.findColumnTasks(id);
   }
 }
