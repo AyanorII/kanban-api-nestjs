@@ -1,13 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BoardsService } from '../boards/boards.service';
 import { Board } from '../boards/entities/board.entity';
+import { Task } from '../tasks/entities/task.entity';
+import { TasksService } from '../tasks/tasks.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
 import { Column } from './entities/column.entity';
 
 @Injectable()
 export class ColumnsService {
-  constructor(private boardsService: BoardsService) {}
+  constructor(
+    private boardsService: BoardsService,
+    @Inject(forwardRef(() => TasksService))
+    private tasksService: TasksService,
+  ) {}
 
   async create(createColumnDto: CreateColumnDto): Promise<Column> {
     const { name, boardId } = createColumnDto;
