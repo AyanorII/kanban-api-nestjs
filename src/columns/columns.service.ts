@@ -43,7 +43,7 @@ export class ColumnsService {
   async findOne(id: number): Promise<Column> {
     const column = await Column.findOne({
       where: { id },
-      relations: ['board'],
+      relations: ['board', 'tasks'],
     });
 
     if (!column) {
