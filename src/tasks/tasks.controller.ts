@@ -9,13 +9,13 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiNoContentResponse } from '@nestjs/swagger';
+import { Subtask } from '../subtasks/entities/subtask.entity';
 import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
 import { UpdateTaskTitleDescription } from './dto/update-title-description.dto';
 import { Task } from './entities/task.entity';
 import { TasksService } from './tasks.service';
-import { Subtask } from '../subtasks/entities/subtask.entity';
 
 @Controller('tasks')
 export class TasksController {

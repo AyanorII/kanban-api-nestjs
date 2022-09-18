@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateValuesMissingError } from 'typeorm';
 import { ColumnsService } from '../columns/columns.service';
-import { Column } from '../columns/entities/column.entity';
+import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
 import { UpdateTaskTitleDescription } from './dto/update-title-description.dto';
@@ -13,19 +15,28 @@ import { Task } from './entities/task.entity';
 
 @Injectable()
 export class TasksService {
-  constructor(private columnsService: ColumnsService) {}
+  constructor(
+    private columnsService: ColumnsService,
+    @Inject(forwardRef(() => SubtasksService))
+    private subtasksService: SubtasksService,
+  ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const { title, description, status, columnId } = createTaskDto;
+    const { title, description, status, columnId, subtasks } = createTaskDto;
 
-    const column = await Column.findOne({ where: { id: columnId } });
-
-    if (!column) {
-      throw new NotFoundException(`Column with ID: '${columnId}' not found.`);
-    }
-
+    const column = await this.columnsService.findOne(columnId);
     const task = Task.create({ title, description, status, column });
     await task.save();
+
+    if (subtasks.length > 1) {
+      const subtasksPromise = subtasks
+        .filter((subtask) => subtask.title !== '')
+        .map(
+          async (subtask) =>
+            await this.subtasksService.create({ ...subtask, taskId: task.id }),
+        );
+      await Promise.all(subtasksPromise);
+    }
     return task;
   }
 

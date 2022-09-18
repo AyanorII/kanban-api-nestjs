@@ -1,6 +1,7 @@
 import { IsString } from '@nestjs/class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import { CreateSubtaskDto } from 'src/subtasks/dto/create-subtask.dto';
 
 export class CreateTaskDto {
   @ApiProperty()
@@ -22,4 +23,9 @@ export class CreateTaskDto {
   @IsInt()
   @IsNotEmpty()
   columnId: number;
+
+  @ApiProperty()
+  @IsArray()
+  @IsOptional()
+  subtasks?: CreateSubtaskDto[];
 }
