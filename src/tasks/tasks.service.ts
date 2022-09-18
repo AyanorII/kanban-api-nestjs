@@ -61,32 +61,12 @@ export class TasksService {
     return task;
   }
 
-  /**
-   * Updates only the title and/or description of a Task instance.
-   * @param id Task ID.
-   * @param updateTaskDto Object containing the title and/or description to be updated.
-   * @returns The updated instance of the Task entity or throws an error if no data was given.
-   */
-  // async updateTitleAndDescription(
-  //   id: number,
-  //   updateTaskDto: UpdateTaskTitleDescription,
-  // ): Promise<Task> {
-  //   try {
-  //     await Task.update(id, updateTaskDto);
-  //     const task = await this.findOne(id);
-
-  //     return task;
-  //   } catch (err) {
-  //     if (err instanceof UpdateValuesMissingError) {
-  //       throw new BadRequestException(err.message.split('.')[0]);
-  //     }
-  //   }
-  // }
   async updateTask(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
     const { subtasks, columnId, ...rest } = updateTaskDto;
 
     try {
       const column = await this.columnsService.findOne(columnId);
+
       await Task.update(id, { ...rest, column });
       const task = await this.findOne(id);
       const subtasksPromise = subtasks
