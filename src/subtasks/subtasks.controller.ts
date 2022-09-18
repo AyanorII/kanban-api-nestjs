@@ -41,6 +41,14 @@ export class SubtasksController {
     return this.subtasksService.update(id, updateSubtaskDto);
   }
 
+  @Patch(':id/completed')
+  async updateSubtaskCompleted(
+    @Param('id') id: number,
+    @Body() updateSubtaskDto: UpdateSubtaskDto,
+  ): Promise<Subtask> {
+    return this.subtasksService.updateSubtaskCompleted(id, updateSubtaskDto);
+  }
+
   @HttpCode(204)
   @ApiNoContentResponse()
   @Delete(':id')

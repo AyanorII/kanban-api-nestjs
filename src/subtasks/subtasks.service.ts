@@ -65,4 +65,17 @@ export class SubtasksService {
 
     return subtasks;
   }
+
+  async updateSubtaskCompleted(
+    id: number,
+    updateSubtaskDto: UpdateSubtaskDto,
+  ): Promise<Subtask> {
+    const { completed } = updateSubtaskDto;
+
+    const subtask = await this.findOne(id);
+    subtask.completed = completed;
+    await subtask.save();
+
+    return subtask;
+  }
 }
