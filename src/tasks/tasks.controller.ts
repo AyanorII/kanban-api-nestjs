@@ -13,7 +13,7 @@ import { Subtask } from '../subtasks/entities/subtask.entity';
 import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
-import { UpdateTaskTitleDescription } from './dto/update-title-description.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
 import { TasksService } from './tasks.service';
 
@@ -40,11 +40,11 @@ export class TasksController {
   }
 
   @Patch(':id')
-  async updateTitleAndDescription(
+  async updateTask(
     @Param('id') id: number,
-    @Body() updateTaskDto: UpdateTaskTitleDescription,
+    @Body() updateTaskDto: UpdateTaskDto,
   ): Promise<Task> {
-    return this.tasksService.updateTitleAndDescription(id, updateTaskDto);
+    return this.tasksService.updateTask(id, updateTaskDto);
   }
 
   @Patch(':id/status')

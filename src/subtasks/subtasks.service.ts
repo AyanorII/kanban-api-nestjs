@@ -40,11 +40,9 @@ export class SubtasksService {
     id: number,
     updateSubtaskDto: UpdateSubtaskDto,
   ): Promise<Subtask> {
-    const { title, completed, taskId } = updateSubtaskDto;
+    const { title, completed } = updateSubtaskDto;
 
-    const task = await this.tasksService.findOne(taskId);
-
-    await Subtask.update(id, { title, completed, task });
+    await Subtask.update(id, { title, completed });
     const subtask = await this.findOne(id);
     await subtask.save();
 

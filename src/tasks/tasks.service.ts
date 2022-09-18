@@ -3,14 +3,16 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { UpdateValuesMissingError } from 'typeorm';
 import { ColumnsService } from '../columns/columns.service';
+import { CreateSubtaskDto } from '../subtasks/dto/create-subtask.dto';
 import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
-import { UpdateTaskTitleDescription } from './dto/update-title-description.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task } from './entities/task.entity';
 
 @Injectable()
@@ -28,7 +30,7 @@ export class TasksService {
     const task = Task.create({ title, description, status, column });
     await task.save();
 
-    if (subtasks.length > 1) {
+    if (subtasks?.length > 1) {
       const subtasksPromise = subtasks
         .filter((subtask) => subtask.title !== '')
         .map(
@@ -65,18 +67,45 @@ export class TasksService {
    * @param updateTaskDto Object containing the title and/or description to be updated.
    * @returns The updated instance of the Task entity or throws an error if no data was given.
    */
-  async updateTitleAndDescription(
-    id: number,
-    updateTaskDto: UpdateTaskTitleDescription,
-  ): Promise<Task> {
+  // async updateTitleAndDescription(
+  //   id: number,
+  //   updateTaskDto: UpdateTaskTitleDescription,
+  // ): Promise<Task> {
+  //   try {
+  //     await Task.update(id, updateTaskDto);
+  //     const task = await this.findOne(id);
+
+  //     return task;
+  //   } catch (err) {
+  //     if (err instanceof UpdateValuesMissingError) {
+  //       throw new BadRequestException(err.message.split('.')[0]);
+  //     }
+  //   }
+  // }
+  async updateTask(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
+    const { subtasks, columnId, ...rest } = updateTaskDto;
+
     try {
-      await Task.update(id, updateTaskDto);
+      const column = await this.columnsService.findOne(columnId);
+      await Task.update(id, { ...rest, column });
       const task = await this.findOne(id);
+      const subtasksPromise = subtasks
+        .filter((subtask) => subtask.title !== '')
+        .map((subtask) => {
+          const { taskId, ...rest } = subtask;
+          return subtask.id
+            ? this.subtasksService.update(subtask.id, rest)
+            : this.subtasksService.create(subtask as CreateSubtaskDto);
+        });
+
+      await Promise.all(subtasksPromise);
 
       return task;
-    } catch (err) {
+    } catch (err: any) {
       if (err instanceof UpdateValuesMissingError) {
         throw new BadRequestException(err.message.split('.')[0]);
+      } else {
+        throw new InternalServerErrorException(err.message);
       }
     }
   }
