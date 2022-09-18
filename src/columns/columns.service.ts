@@ -24,11 +24,11 @@ export class ColumnsService {
     const { name, boardId } = createColumnDto;
 
     const column = await new Column();
-    const board = await Board.findOneOrFail({ where: { id: boardId } });
+    const board = await this.boardsService.findOne(boardId);
 
     column.name = name;
     column.board = board;
-
+    column.color = Column.generateRandomHexColor();
     await column.save();
 
     return column;

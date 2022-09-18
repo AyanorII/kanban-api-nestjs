@@ -17,6 +17,9 @@ export class Column extends BaseEntity {
   @TableColumn()
   name: string;
 
+  @TableColumn()
+  color: string;
+
   @ManyToOne(() => Board, (board) => board.columns, {
     onDelete: 'CASCADE',
   })
@@ -26,4 +29,9 @@ export class Column extends BaseEntity {
     onDelete: 'CASCADE',
   })
   tasks: Task[];
+
+  static generateRandomHexColor(): string {
+    const hex = Math.floor(Math.random() * 16777215).toString(16);
+    return '#' + ('000000' + hex).slice(-6);
+  }
 }
