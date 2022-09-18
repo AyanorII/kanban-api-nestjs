@@ -71,4 +71,14 @@ export class ColumnsService {
   async findColumnTasks(columnId: number): Promise<Task[]> {
     return this.tasksService.findColumnTasks(columnId);
   }
+
+  async findBoardColumns(boardId: number): Promise<Column[]> {
+    const board = await this.boardsService.findOne(boardId);
+
+    const columns = await Column.createQueryBuilder('column')
+      .where({ board })
+      .getMany();
+
+    return columns;
+  }
 }

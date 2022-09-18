@@ -5,7 +5,7 @@ import { ColumnsController } from './columns.controller';
 import { ColumnsService } from './columns.service';
 
 @Module({
-  imports: [BoardsModule, forwardRef(() => TasksModule)],
+  imports: [forwardRef(() => BoardsModule), forwardRef(() => TasksModule)],
   controllers: [ColumnsController],
   providers: [ColumnsService],
   exports: [ColumnsService],
