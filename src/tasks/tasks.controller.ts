@@ -9,15 +9,20 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiNoContentResponse } from '@nestjs/swagger';
+import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
 import { UpdateTaskTitleDescription } from './dto/update-title-description.dto';
 import { Task } from './entities/task.entity';
 import { TasksService } from './tasks.service';
+import { Subtask } from '../subtasks/entities/subtask.entity';
 
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private subtasksService: SubtasksService,
+    private tasksService: TasksService,
+  ) {}
 
   @Post()
   async create(@Body() createTaskDto: CreateTaskDto): Promise<Task> {
@@ -55,5 +60,10 @@ export class TasksController {
   @Delete(':id')
   async remove(@Param('id') id: number): Promise<void> {
     return this.tasksService.remove(id);
+  }
+
+  @Get(':id/subtasks')
+  async findTaskSubtasks(@Param('id') id: number): Promise<Subtask[]> {
+    return this.subtasksService.findTaskSubtasks(id);
   }
 }

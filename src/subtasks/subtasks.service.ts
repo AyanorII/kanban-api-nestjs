@@ -1,4 +1,4 @@
-import { HttpCode, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TasksService } from '../tasks/tasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
@@ -54,5 +54,15 @@ export class SubtasksService {
   async remove(id: number): Promise<void> {
     const subtask = await this.findOne(id);
     await subtask.remove();
+  }
+
+  async findTaskSubtasks(taskId: number): Promise<Subtask[]> {
+    const task = await this.tasksService.findOne(taskId);
+
+    const subtasks = await Subtask.createQueryBuilder('subtask')
+      .where({ task })
+      .getMany();
+
+    return subtasks;
   }
 }
