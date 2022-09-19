@@ -1,25 +1,37 @@
-import { validate } from '@nestjs/class-validator';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { ColumnsService } from '../columns/columns.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Board } from './entities/board.entity';
 
 @Injectable()
 export class BoardsService {
+  constructor(
+    @Inject(forwardRef(() => ColumnsService))
+    private columnsService: ColumnsService,
+  ) {}
+
   async create(createBoardDto: CreateBoardDto): Promise<Board> {
-    const { name } = createBoardDto;
+    const { name, columns } = createBoardDto;
 
     const board = new Board();
     board.name = name;
+    await board.save();
 
-    const errors = await validate(board);
+    if (columns.length) {
+      const columnsPromise = columns.map((column) =>
+        this.columnsService.create({ name: column, boardId: board.id }),
+      );
 
-    if (errors.length > 0) {
-      throw new Error(`Validation failed: ${errors[0].property}`);
-    } else {
-      await board.save();
-      return board;
+      Promise.all(columnsPromise);
     }
+
+    return board;
   }
 
   async findAll(): Promise<Board[]> {
