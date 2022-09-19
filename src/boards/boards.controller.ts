@@ -10,10 +10,10 @@ import {
 } from '@nestjs/common';
 import { EntityNotFoundError } from 'typeorm';
 import { ColumnsService } from '../columns/columns.service';
+import { Column } from '../columns/entities/column.entity';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { Column } from '../columns/entities/column.entity';
 
 @Controller('boards')
 export class BoardsController {

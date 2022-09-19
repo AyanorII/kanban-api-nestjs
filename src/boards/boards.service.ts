@@ -24,9 +24,11 @@ export class BoardsService {
     await board.save();
 
     if (columns.length) {
-      const columnsPromise = columns.map((column) =>
-        this.columnsService.create({ name: column, boardId: board.id }),
-      );
+      const columnsPromise = columns
+        .filter((column) => typeof column === 'string')
+        .map((column) =>
+          this.columnsService.create({ name: column, boardId: board.id }),
+        );
 
       Promise.all(columnsPromise);
     }
