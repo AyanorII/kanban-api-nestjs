@@ -7,4 +7,5 @@ export const configSchemaValidation = Joi.object({
   PGPASSWORD: Joi.string().required(),
   PGDATABASE: Joi.string().required(),
   PORT: Joi.number().required(),
+  API_URL: Joi.string().required(),
 });
