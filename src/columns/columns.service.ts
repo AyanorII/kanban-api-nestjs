@@ -1,11 +1,11 @@
 import {
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { BoardsService } from '../boards/boards.service';
-import { Board } from '../boards/entities/board.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { TasksService } from '../tasks/tasks.service';
 import { CreateColumnDto } from './dto/create-column.dto';
@@ -23,6 +23,11 @@ export class ColumnsService {
   async create(createColumnDto: CreateColumnDto): Promise<Column> {
     const { name, boardId } = createColumnDto;
 
+    if (await Column.alreadyExists(name)) {
+      throw new BadRequestException(
+        `Column with name '${name}' already exists`,
+      );
+    }
     const column = await new Column();
     const board = await this.boardsService.findOne(boardId);
 

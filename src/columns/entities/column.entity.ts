@@ -34,4 +34,9 @@ export class Column extends BaseEntity {
     const hex = Math.floor(Math.random() * 16777215).toString(16);
     return '#' + ('000000' + hex).slice(-6);
   }
+
+  static async alreadyExists(name: string): Promise<boolean> {
+    const found = await this.findOneBy({ name });
+    return Boolean(found);
+  }
 }

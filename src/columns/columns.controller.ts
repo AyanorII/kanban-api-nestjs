@@ -4,17 +4,16 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
+import { Task } from '../tasks/entities/task.entity';
+import { TasksService } from '../tasks/tasks.service';
 import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
 import { Column } from './entities/column.entity';
-import { Task } from '../tasks/entities/task.entity';
-import { TasksService } from '../tasks/tasks.service';
 
 @Controller('columns')
 export class ColumnsController {
@@ -25,14 +24,8 @@ export class ColumnsController {
 
   @Post()
   async create(@Body() createColumnDto: CreateColumnDto): Promise<Column> {
-    const { boardId } = createColumnDto;
-
-    try {
-      const column = await this.columnsService.create(createColumnDto);
-      return column;
-    } catch (err) {
-      throw new NotFoundException(`Board with ID: ${boardId} not found`);
-    }
+    const column = await this.columnsService.create(createColumnDto);
+    return column;
   }
 
   @Get()
