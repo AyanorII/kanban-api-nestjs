@@ -1,5 +1,5 @@
-import { Board } from 'src/boards/entities/board.entity';
-import { Task } from 'src/tasks/entities/task.entity';
+import { Board } from '../../boards/entities/board.entity';
+import { Task } from '../../tasks/entities/task.entity';
 import {
   BaseEntity,
   Column as TableColumn,
