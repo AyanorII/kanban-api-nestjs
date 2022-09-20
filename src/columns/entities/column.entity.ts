@@ -1,5 +1,3 @@
-import { Board } from '../../boards/entities/board.entity';
-import { Task } from '../../tasks/entities/task.entity';
 import {
   BaseEntity,
   Column as TableColumn,
@@ -8,6 +6,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Board } from '../../boards/entities/board.entity';
+import { Task } from '../../tasks/entities/task.entity';
 
 @Entity()
 export class Column extends BaseEntity {
@@ -35,8 +35,11 @@ export class Column extends BaseEntity {
     return '#' + ('000000' + hex).slice(-6);
   }
 
-  static async alreadyExists(name: string): Promise<boolean> {
-    const found = await this.findOneBy({ name });
+  static async alreadyExists(name: string, boardId: number): Promise<boolean> {
+    const found = await this.createQueryBuilder('column')
+      .where('column.board = :board', { board: boardId })
+      .andWhere({ name })
+      .getOne();
     return Boolean(found);
   }
 }

@@ -23,7 +23,7 @@ export class ColumnsService {
   async create(createColumnDto: CreateColumnDto): Promise<Column> {
     const { name, boardId } = createColumnDto;
 
-    if (await Column.alreadyExists(name)) {
+    if (await Column.alreadyExists(name, boardId)) {
       throw new BadRequestException(
         `Column with name '${name}' already exists`,
       );

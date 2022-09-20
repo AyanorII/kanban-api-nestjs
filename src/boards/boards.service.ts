@@ -23,7 +23,7 @@ export class BoardsService {
     board.name = name;
     await board.save();
 
-    if (columns.length) {
+    if (columns?.length) {
       const columnsPromise = columns
         .filter((column) => typeof column === 'string')
         .map((column) =>
