@@ -8,34 +8,34 @@ datasource db {
 }
 
 model Board {
-  id     Int      @id(map: "PK_865a0f2e22c140d261b1df80eb1") @default(autoincrement())
-  name   String   @db.VarChar
-  column Column[]
+  id      Int      @id @default(autoincrement())
+  name    String   @db.VarChar
+  columns Column[]
 }
 
 model Column {
-  id      Int    @id(map: "PK_cee3c7ee3135537fb8f5df4422b") @default(autoincrement())
+  id      Int    @id @default(autoincrement())
   name    String @db.VarChar
   color   String @db.VarChar
-  boardId Int?
-  board   Board? @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_cf15a522eb00160987b6fcf91e4")
-  task    Task[]
+  boardId Int
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks   Task[]
 }
 
 model Subtask {
-  id        Int     @id(map: "PK_e0cda44ad38dba885bd8ab1afd3") @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   title     String  @db.VarChar
   completed Boolean @default(false)
-  taskId    Int?
-  task      Task?   @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_8209040ec2c518c62c70cd382dd")
+  taskId    Int
+  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model Task {
-  id          Int       @id(map: "PK_fb213f79ee45060ba925ecd576e") @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String    @db.VarChar
   description String    @db.VarChar
   status      String    @db.VarChar
-  columnId    Int?
-  column      Column?   @relation(fields: [columnId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f56fe6f2d8ab0b970f764bd601b")
-  subtask     Subtask[]
+  columnId    Int
+  column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subtasks    Subtask[]
 }
