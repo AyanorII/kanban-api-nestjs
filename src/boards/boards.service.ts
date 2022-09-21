@@ -1,73 +1,82 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { ColumnsService } from '../columns/columns.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Board } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { Board } from './entities/board.entity';
 
 @Injectable()
 export class BoardsService {
-  constructor(
-    @Inject(forwardRef(() => ColumnsService))
-    private columnsService: ColumnsService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(createBoardDto: CreateBoardDto): Promise<Board> {
     const { name, columns } = createBoardDto;
+    const board = await this.prisma.board.create({
+      data: { name },
+    });
 
-    const board = new Board();
-    board.name = name;
-    await board.save();
+    // const board = new Board();
+    // board.name = name;
+    // await board.save();
 
-    if (columns?.length) {
-      const columnsPromise = columns
-        .filter((column) => typeof column === 'string')
-        .map((column) =>
-          this.columnsService.create({ name: column, boardId: board.id }),
-        );
+    // if (columns?.length) {
+    //   const columnsPromise = columns
+    //     .filter((column) => typeof column === 'string')
+    //     .map(
+    //       this.columnsService.create({ name: column, boardId: board.id }),
+    //     );
 
-      Promise.all(columnsPromise);
-    }
+    //   Promise.all(columnsPromise);
+    // }
 
     return board;
   }
 
   async findAll(): Promise<Board[]> {
-    const boards = await Board.find();
-
-    return boards;
+    return this.prisma.board.findMany();
   }
 
   async findOne(id: number): Promise<Board> {
-    const board = await Board.findOne({
-      where: { id },
-      relations: ['columns'],
-    });
+    try {
+      const board = await this.prisma.board.findUniqueOrThrow({
+        where: { id },
+        include: {
+          columns: true,
+        },
+      });
 
-    if (!board) {
-      throw new NotFoundException(`Board with ID: ${id} not found.`);
+      return board;
+    } catch (error) {
+      throw new NotFoundException(`Board with ID: '${id}' not found.`);
     }
-
-    return board;
   }
 
   async update(id: number, updateBoardDto: UpdateBoardDto): Promise<Board> {
-    const { name } = updateBoardDto;
+    try {
+      const board = await this.prisma.board.update({
+        where: { id },
+        data: updateBoardDto,
+      });
 
-    const board = await this.findOne(id);
-
-    board.name = name;
-    await board.save();
-    return board;
+      return board;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Board with ID: '${id}' not found.`);
+        }
+      }
+    }
   }
 
-  async remove(id: number): Promise<Board> {
-    const board = await this.findOne(id);
-    await board.remove();
-    return board;
+  async remove(id: number): Promise<void> {
+    try {
+      await this.prisma.board.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Board with ID: '${id}' not found.`);
+        }
+      }
+    }
   }
 }
