@@ -10,6 +10,7 @@ import { ColumnsModule } from './columns/columns.module';
 import { SeedModule } from './seed/seed.module';
 import { SubtasksModule } from './subtasks/subtasks.module';
 import { TasksModule } from './tasks/tasks.module';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
@@ -25,6 +26,6 @@ import { TasksModule } from './tasks/tasks.module';
     SeedModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrismaService],
 })
 export class AppModule {}
