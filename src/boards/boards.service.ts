@@ -33,22 +33,22 @@ export class BoardsService {
   }
 
   async findAll(): Promise<Board[]> {
-    return this.prisma.board.findMany();
+    return this.prisma.board.findMany({ orderBy: { id: 'asc' } });
   }
 
   async findOne(id: number): Promise<Board> {
-    try {
-      const board = await this.prisma.board.findUniqueOrThrow({
-        where: { id },
-        include: {
-          columns: true,
-        },
-      });
+    const board = await this.prisma.board.findUnique({
+      where: { id },
+      include: {
+        columns: true,
+      },
+    });
 
-      return board;
-    } catch (error) {
+    if (!board) {
       throw new NotFoundException(`Board with ID: '${id}' not found.`);
     }
+
+    return board;
   }
 
   async update(id: number, updateBoardDto: UpdateBoardDto): Promise<Board> {
