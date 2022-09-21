@@ -4,6 +4,7 @@ import { configSchemaValidation } from '../config.schema';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BoardsModule } from './boards/boards.module';
+import { ColumnsModule } from './columns/columns.module';
 import { PrismaService } from './prisma/prisma.service';
 
 @Module({
@@ -13,6 +14,7 @@ import { PrismaService } from './prisma/prisma.service';
       validationSchema: configSchemaValidation,
     }),
     BoardsModule,
+    ColumnsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

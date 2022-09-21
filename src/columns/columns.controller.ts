@@ -8,18 +8,16 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Task } from '../tasks/entities/task.entity';
-import { TasksService } from '../tasks/tasks.service';
+// import { TasksService } from '../tasks/tasks.service';
+import { Column } from '@prisma/client';
 import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
-import { Column } from './entities/column.entity';
 
 @Controller('columns')
 export class ColumnsController {
   constructor(
-    private columnsService: ColumnsService,
-    private tasksService: TasksService,
+    private columnsService: ColumnsService, // private tasksService: TasksService,
   ) {}
 
   @Post()
@@ -56,8 +54,8 @@ export class ColumnsController {
     return this.columnsService.remove(id);
   }
 
-  @Get(':id/tasks')
-  async findColumnTasks(@Param('id') id: number): Promise<Task[]> {
-    return this.tasksService.findColumnTasks(id);
-  }
+  // @Get(':id/tasks')
+  // async findColumnTasks(@Param('id') id: number): Promise<Task[]> {
+  //   return this.tasksService.findColumnTasks(id);
+  // }
 }
