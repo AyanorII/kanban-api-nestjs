@@ -1,32 +1,52 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { Subtask } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
+import { UpdateSubtaskCompletedDto } from './dto/update-subtask-completed.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
-import { Subtask } from './entities/subtask.entity';
 
 @Injectable()
 export class SubtasksService {
-  constructor(private tasksService: TasksService) {}
+  constructor(
+    @Inject(forwardRef(() => TasksService))
+    private tasksService: TasksService,
+    private prisma: PrismaService,
+  ) {}
 
   async create(createSubtaskDto: CreateSubtaskDto): Promise<Subtask> {
-    const { title, completed, taskId } = createSubtaskDto;
+    try {
+      const subtask = await this.prisma.subtask.create({
+        data: { ...createSubtaskDto },
+      });
 
-    const task = await this.tasksService.findOne(taskId);
-
-    const subtask = Subtask.create({ title, completed, task });
-    await subtask.save();
-
-    return subtask;
+      return subtask;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2003') {
+          throw new NotFoundException(
+            `Task with ID: '${createSubtaskDto.taskId}' does not exist.`,
+          );
+        }
+      }
+    }
   }
 
   async findAll(): Promise<Subtask[]> {
-    return Subtask.find();
+    return this.prisma.subtask.findMany({ orderBy: { id: 'asc' } });
   }
 
   async findOne(id: number): Promise<Subtask> {
-    const subtask = await Subtask.findOne({
+    const subtask = await this.prisma.subtask.findUnique({
       where: { id },
-      relations: ['task'],
+      include: { task: true },
     });
 
     if (!subtask) {
@@ -40,40 +60,54 @@ export class SubtasksService {
     id: number,
     updateSubtaskDto: UpdateSubtaskDto,
   ): Promise<Subtask> {
-    const { title, completed } = updateSubtaskDto;
+    try {
+      const subtask = await this.prisma.subtask.update({
+        where: { id },
+        data: { ...updateSubtaskDto },
+      });
 
-    await Subtask.update(id, { title, completed });
-    const subtask = await this.findOne(id);
-    await subtask.save();
-
-    return subtask;
+      return subtask;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        Logger.debug(error.message);
+        Logger.debug(error.code);
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Subtask with ID: '${id}' not found.`);
+        }
+      }
+    }
   }
 
   async remove(id: number): Promise<void> {
-    const subtask = await this.findOne(id);
-    await subtask.remove();
-  }
-
-  async findTaskSubtasks(taskId: number): Promise<Subtask[]> {
-    const task = await this.tasksService.findOne(taskId);
-
-    const subtasks = await Subtask.createQueryBuilder('subtask')
-      .where({ task })
-      .getMany();
-
-    return subtasks;
+    try {
+      await this.prisma.subtask.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Subtask with ID: '${id}' not found.`);
+        }
+      }
+    }
   }
 
   async updateSubtaskCompleted(
     id: number,
-    updateSubtaskDto: UpdateSubtaskDto,
+    updateSubtaskCompletedDto: UpdateSubtaskCompletedDto,
   ): Promise<Subtask> {
-    const { completed } = updateSubtaskDto;
+    try {
+      const subtask = await this.prisma.subtask.update({
+        where: { id },
+        data: updateSubtaskCompletedDto,
+        include: { task: true },
+      });
 
-    const subtask = await this.findOne(id);
-    subtask.completed = completed;
-    await subtask.save();
-
-    return subtask;
+      return subtask;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Subtask with ID: '${id}' not found.`);
+        }
+      }
+    }
   }
 }

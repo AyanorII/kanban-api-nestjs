@@ -4,16 +4,18 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiNoContentResponse } from '@nestjs/swagger';
+import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
+import { Subtask } from '@prisma/client';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
-import { Subtask } from './entities/subtask.entity';
 import { SubtasksService } from './subtasks.service';
 
+@ApiTags('Subtasks')
 @Controller('subtasks')
 export class SubtasksController {
   constructor(private readonly subtasksService: SubtasksService) {}
@@ -49,7 +51,7 @@ export class SubtasksController {
     return this.subtasksService.updateSubtaskCompleted(id, updateSubtaskDto);
   }
 
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   @Delete(':id')
   async remove(@Param('id') id: number): Promise<void> {

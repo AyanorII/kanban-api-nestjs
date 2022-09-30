@@ -1,33 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Board } from '@prisma/client';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Board, Column } from '@prisma/client';
+import { ColumnsService } from '../columns/columns.service';
+import { CreateColumnDto } from '../columns/dto/create-column.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 
 @Injectable()
 export class BoardsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private columnsService: ColumnsService,
+  ) {}
 
   async create(createBoardDto: CreateBoardDto): Promise<Board> {
     const { name, columns } = createBoardDto;
+
+    if (await this.boardNameAlreadyExists(name)) {
+      throw new ConflictException(`Board with name '${name}' already exists.`);
+    }
+
+    const filteredColumns = this.getUniqueColumnNames(columns);
+
     const board = await this.prisma.board.create({
-      data: { name },
+      data: {
+        name,
+        columns: {
+          createMany: {
+            data: filteredColumns.map((column) => ({
+              ...column,
+              color: this.columnsService.generateColumnColor(),
+            })),
+          },
+        },
+      },
+      include: { columns: true },
     });
-
-    // const board = new Board();
-    // board.name = name;
-    // await board.save();
-
-    // if (columns?.length) {
-    //   const columnsPromise = columns
-    //     .filter((column) => typeof column === 'string')
-    //     .map(
-    //       this.columnsService.create({ name: column, boardId: board.id }),
-    //     );
-
-    //   Promise.all(columnsPromise);
-    // }
 
     return board;
   }
@@ -52,31 +65,58 @@ export class BoardsService {
   }
 
   async update(id: number, updateBoardDto: UpdateBoardDto): Promise<Board> {
+    const { name } = updateBoardDto;
+
+    if (await this.boardNameAlreadyExists(name)) {
+      throw new ConflictException(`Board with name '${name}' already exists.`);
+    }
+
+    const board = await this.prisma.board.update({
+      where: { id },
+      data: updateBoardDto,
+    });
+
+    return board;
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.prisma.board.delete({ where: { id } });
+  }
+
+  async findBoardColumns(id: number): Promise<Column[]> {
     try {
-      const board = await this.prisma.board.update({
-        where: { id },
-        data: updateBoardDto,
+      const columns = await this.prisma.column.findMany({
+        where: { boardId: id },
       });
 
-      return board;
+      return columns;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException(`Board with ID: '${id}' not found.`);
+        // Foreign key constraint
+        if (error.code === 'P2003') {
+          throw new NotFoundException(`Board with ID: ${id} does not exist.`);
         }
       }
     }
   }
 
-  async remove(id: number): Promise<void> {
-    try {
-      await this.prisma.board.delete({ where: { id } });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException(`Board with ID: '${id}' not found.`);
-        }
+  /* ---------------------------- Private methods --------------------------- */
+
+  private async boardNameAlreadyExists(name: string): Promise<boolean> {
+    const board = await this.prisma.board.findFirst({ where: { name } });
+
+    return Boolean(board);
+  }
+
+  private getUniqueColumnNames(columns: CreateColumnDto[]): { name: string }[] {
+    const filteredColumns: { name: string }[] = []; // Remove duplicates
+
+    Object.values(columns).forEach((column) => {
+      if (!filteredColumns.find((c) => c.name === column.name)) {
+        filteredColumns.push(column);
       }
-    }
+    });
+
+    return filteredColumns;
   }
 }

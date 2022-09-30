@@ -26,6 +26,5 @@ export class CreateTaskDto {
 
   @ApiProperty()
   @IsArray()
-  @IsOptional()
-  subtasks?: CreateSubtaskDto[];
+  subtasks: CreateSubtaskDto[];
 }

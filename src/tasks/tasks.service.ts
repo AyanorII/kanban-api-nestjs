@@ -1,49 +1,54 @@
 import {
-  BadRequestException,
-  forwardRef,
-  Inject,
+  ConflictException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { UpdateValuesMissingError } from 'typeorm';
 import { ColumnsService } from '../columns/columns.service';
-import { CreateSubtaskDto } from '../subtasks/dto/create-subtask.dto';
-import { SubtasksService } from '../subtasks/subtasks.service';
+// import { SubtasksService } from '../subtasks/subtasks.service';
+import { Task } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { SubtasksService } from 'src/subtasks/subtasks.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task } from './entities/task.entity';
 
 @Injectable()
 export class TasksService {
   constructor(
+    private prisma: PrismaService,
     private columnsService: ColumnsService,
-    @Inject(forwardRef(() => SubtasksService))
     private subtasksService: SubtasksService,
   ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     const { title, description, status, columnId, subtasks } = createTaskDto;
 
-    const column = await this.columnsService.findOne(columnId);
-    const task = Task.create({ title, description, status, column });
-    await task.save();
+    try {
+      const task = await this.prisma.task.create({
+        data: {
+          title,
+          description,
+          status,
+          columnId,
+          subtasks: { createMany: { data: subtasks } },
+        },
+        include: { subtasks: true },
+      });
 
-    if (subtasks?.length > 1) {
-      const subtasksPromise = subtasks
-        .filter((subtask) => subtask.title !== '')
-        .map(
-          async (subtask) =>
-            await this.subtasksService.create({ ...subtask, taskId: task.id }),
-        );
-      await Promise.all(subtasksPromise);
+      return task;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2003') {
+          throw new NotFoundException(
+            `Column with ID: '${columnId}' does not exist.`,
+          );
+        }
+      }
     }
-    return task;
   }
 
   async findAll(): Promise<Task[]> {
-    return Task.find();
+    return this.prisma.task.findMany({ orderBy: { id: 'asc' } });
   }
 
   /**
@@ -52,81 +57,97 @@ export class TasksService {
    * @returns A task entity instance or throws a NotFoundException if no task was found with the given ID.
    */
   async findOne(id: number): Promise<Task> {
-    const task = await Task.findOne({ where: { id } });
+    const task = await this.prisma.task.findUnique({
+      where: { id },
+      include: { subtasks: true, column: true },
+    });
 
     if (!task) {
-      throw new NotFoundException(`Task with ID: ${id} not found.`);
+      throw new NotFoundException(`Task with ID: '${id}' not found.`);
     }
 
     return task;
   }
 
   async updateTask(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    const { subtasks, columnId, ...rest } = updateTaskDto;
+    const { subtasks, columnId, status, ...rest } = updateTaskDto;
 
-    try {
+    // Checks if columnId and status are present, and if so, checks if column name and status match, if not, throws a ConflictException.
+    if (columnId && status) {
       const column = await this.columnsService.findOne(columnId);
-
-      await Task.update(id, { ...rest, column });
-      const task = await this.findOne(id);
-      const subtasksPromise = subtasks
-        .filter((subtask) => subtask.title !== '')
-        .map((subtask) => {
-          const { taskId, ...rest } = subtask;
-          return subtask.id
-            ? this.subtasksService.update(subtask.id, rest)
-            : this.subtasksService.create(subtask as CreateSubtaskDto);
-        });
-
-      await Promise.all(subtasksPromise);
-
-      return task;
-    } catch (err: any) {
-      if (err instanceof UpdateValuesMissingError) {
-        throw new BadRequestException(err.message.split('.')[0]);
-      } else {
-        throw new InternalServerErrorException(err.message);
+      if (column.name !== status) {
+        throw new ConflictException(
+          `Column name: '${column.name}' does not match the status: '${status}'.`,
+        );
       }
     }
-  }
-
-  /**
-   * Updates only the status and/or columnId of a Task instance.
-   * @param id Task ID
-   * @param updateTaskDto Object containing the status and/or columnId to be updated.
-   * @returns The updated instance of the Task entity or throws an error if no data was given.
-   */
-  async updateStatusAndColumn(
-    id: number,
-    updateTaskDto: UpdateTaskStatusColumn,
-  ): Promise<Task> {
-    const { status, columnId } = updateTaskDto;
-
-    const column = await this.columnsService.findOne(columnId);
 
     try {
-      await Task.update(id, { status, column });
-      const task = await this.findOne(id);
+      const task = await this.prisma.task.update({
+        where: { id },
+        data: { ...rest, columnId, status },
+        include: { subtasks: true },
+      });
+
+      await this.updateSubtasks(subtasks, task);
 
       return task;
-    } catch (err) {
-      if (err instanceof UpdateValuesMissingError) {
-        throw new BadRequestException(err.message.split('.')[0]);
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Task with ID: '${id}' not found.`);
+        }
+        if (error.code === 'P2003') {
+          throw new NotFoundException(
+            `Column with ID: ${updateTaskDto.columnId} does not exist.`,
+          );
+        }
       }
     }
   }
 
   async remove(id: number): Promise<void> {
-    const task = await this.findOne(id);
-    await task.remove();
+    try {
+      await this.prisma.task.delete({ where: { id } });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Task with ID: ${id} not found.`);
+        }
+      }
+    }
   }
 
   async findColumnTasks(columnId: number): Promise<Task[]> {
     const column = await this.columnsService.findOne(columnId);
 
-    const query = Task.createQueryBuilder('task');
-    query.where({ column });
-    const tasks = await query.getMany();
-    return tasks;
+    return this.prisma.task.findMany({ where: { columnId: column.id } });
+  }
+
+  /* ---------------------------- Private methods --------------------------- */
+
+  private async updateSubtasks(
+    subtasks: UpdateTaskDto['subtasks'],
+    task: Task,
+  ) {
+    if (subtasks?.length >= 1) {
+      const subtasksPromise = subtasks
+        .filter((subtask) => subtask.title !== '')
+        .map(async (subtask) => {
+          const { id, title, completed } = subtask;
+
+          if (id) {
+            await this.subtasksService.update(id, { title, completed });
+          } else {
+            await this.subtasksService.create({
+              title,
+              taskId: task.id,
+            });
+          }
+        });
+
+      const subtasksUpdated = await Promise.all(subtasksPromise);
+      return subtasksUpdated;
+    }
   }
 }

@@ -1,9 +1,8 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BoardsService } from '../boards/boards.service';
 // import { TasksService } from '../tasks/tasks.service';
 import { Column } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
@@ -13,18 +12,13 @@ import { UpdateColumnDto } from './dto/update-column.dto';
 
 @Injectable()
 export class ColumnsService {
-  constructor(
-    private boardsService: BoardsService,
-    private prisma: PrismaService, // @Inject(forwardRef(() => TasksService)) // private tasksService: TasksService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(createColumnDto: CreateColumnDto): Promise<Column> {
     const { name, boardId } = createColumnDto;
 
     if (await this.columnAlreadyExists(name, boardId)) {
-      throw new BadRequestException(
-        `Column with name '${name}' already exists.`,
-      );
+      throw new ConflictException(`Column with name '${name}' already exists.`);
     }
 
     try {
@@ -37,7 +31,7 @@ export class ColumnsService {
       if (error instanceof PrismaClientKnownRequestError) {
         // Foreign key constraint
         if (error.code === 'P2003') {
-          throw new BadRequestException(
+          throw new NotFoundException(
             `Board with ID: ${boardId} does not exist.`,
           );
         }
@@ -50,7 +44,7 @@ export class ColumnsService {
   }
 
   async findOne(id: number): Promise<Column> {
-    const column = await this.prisma.column.findFirst({
+    const column = await this.prisma.column.findUnique({
       where: { id },
       include: {
         tasks: true,
@@ -59,7 +53,7 @@ export class ColumnsService {
     });
 
     if (!column) {
-      throw new NotFoundException(`Column with ID: ${id} not found.`);
+      throw new NotFoundException(`Column with ID: '${id}' not found.`);
     }
 
     return column;
@@ -69,9 +63,7 @@ export class ColumnsService {
     const { name, boardId } = updateColumnDto;
 
     if (await this.columnAlreadyExists(name, boardId)) {
-      throw new BadRequestException(
-        `Column with name '${name}' already exists`,
-      );
+      throw new ConflictException(`Column with name '${name}' already exists`);
     }
 
     try {
@@ -83,11 +75,7 @@ export class ColumnsService {
       return column;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        // Not Found
-        if (error.code === 'P2025') {
-          throw new NotFoundException(`Column with ID: ${id} not found.`);
-        } else if (error.code === 'P2003') {
-          // Foreign key constraint failed
+        if (error.code === 'P2003') {
           throw new NotFoundException(
             `Board with ID: ${boardId} does not exist.`,
           );
@@ -97,57 +85,22 @@ export class ColumnsService {
   }
 
   async remove(id: number): Promise<void> {
-    try {
-      await this.prisma.column.delete({ where: { id } });
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        // Not Found
-        if (error.code === 'P2025') {
-          throw new NotFoundException(`Column with ID: ${id} not found.`);
-        }
-      }
-    }
+    await this.prisma.column.delete({ where: { id } });
   }
 
-  // async findColumnTasks(columnId: number): Promise<Task[]> {
-  //   return this.tasksService.findColumnTasks(columnId);
-  // }
-
-  // async findBoardColumns(boardId: number): Promise<Column[]> {
-  //   const board = await this.boardsService.findOne(boardId);
-
-  //   const columns = await Column.createQueryBuilder('column')
-  //     .where({ board })
-  //     .getMany();
-
-  //   return columns;
-  // }
-
+  generateColumnColor(): string {
+    return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  }
   /* ---------------------------- Private methods --------------------------- */
 
   private async columnAlreadyExists(
     name: string,
     boardId: number,
   ): Promise<boolean> {
-    try {
-      const found = await this.prisma.column.findFirst({
-        where: { boardId, name },
-      });
+    const found = await this.prisma.column.findFirst({
+      where: { boardId, name },
+    });
 
-      return Boolean(found);
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2001') {
-          //The record searched for in the where condition does not exist
-          throw new NotFoundException(
-            `Board with ID: ${boardId} does not exist.`,
-          );
-        }
-      }
-    }
-  }
-
-  private generateColumnColor(): string {
-    return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    return Boolean(found);
   }
 }

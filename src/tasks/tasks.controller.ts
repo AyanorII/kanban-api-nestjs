@@ -8,19 +8,18 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiNoContentResponse } from '@nestjs/swagger';
-import { Subtask } from '../subtasks/entities/subtask.entity';
-import { SubtasksService } from '../subtasks/subtasks.service';
+import { Task } from '@prisma/client';
+// import { SubtasksService } from '../subtasks/subtasks.service';
+import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { UpdateTaskStatusColumn } from './dto/update-status-column.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task } from './entities/task.entity';
 import { TasksService } from './tasks.service';
 
+@ApiTags('Tasks')
 @Controller('tasks')
 export class TasksController {
   constructor(
-    private subtasksService: SubtasksService,
+    // private subtasksService: SubtasksService,
     private tasksService: TasksService,
   ) {}
 
@@ -47,14 +46,6 @@ export class TasksController {
     return this.tasksService.updateTask(id, updateTaskDto);
   }
 
-  @Patch(':id/status')
-  async updateStatusAndColumn(
-    @Param('id') id: number,
-    @Body() updateTaskDto: UpdateTaskStatusColumn,
-  ): Promise<Task> {
-    return this.tasksService.updateStatusAndColumn(id, updateTaskDto);
-  }
-
   @ApiNoContentResponse()
   @HttpCode(204)
   @Delete(':id')
@@ -62,8 +53,8 @@ export class TasksController {
     return this.tasksService.remove(id);
   }
 
-  @Get(':id/subtasks')
-  async findTaskSubtasks(@Param('id') id: number): Promise<Subtask[]> {
-    return this.subtasksService.findTaskSubtasks(id);
-  }
+  // @Get(':id/subtasks')
+  // async findTaskSubtasks(@Param('id') id: number): Promise<Subtask[]> {
+  //   return this.subtasksService.findTaskSubtasks(id);
+  // }
 }

@@ -11,7 +11,7 @@ export class CreateSubtaskDto {
   @ApiProperty()
   @IsBoolean()
   @IsOptional()
-  completed: boolean;
+  completed?: boolean;
 
   @ApiProperty()
   @IsInt()

@@ -1,6 +1,6 @@
 import { IsArray, IsNotEmpty, IsString } from '@nestjs/class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { CreateColumnDto } from 'src/columns/dto/create-column.dto';
 
 export class CreateBoardDto {
   @ApiProperty()
@@ -10,6 +10,5 @@ export class CreateBoardDto {
 
   @ApiProperty()
   @IsArray()
-  @IsOptional()
-  columns?: string[];
+  columns: CreateColumnDto[];
 }
