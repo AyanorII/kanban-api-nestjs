@@ -1,15 +1,16 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Board, Column } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { ColumnsService } from '../columns/columns.service';
 import { CreateColumnDto } from '../columns/dto/create-column.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 
 @Injectable()
 export class BoardsService {
@@ -32,8 +33,8 @@ export class BoardsService {
         name,
         columns: {
           createMany: {
-            data: filteredColumns.map((column) => ({
-              ...column,
+            data: filteredColumns.map(({ name }) => ({
+              name,
               color: this.columnsService.generateColumnColor(),
             })),
           },
@@ -65,18 +66,35 @@ export class BoardsService {
   }
 
   async update(id: number, updateBoardDto: UpdateBoardDto): Promise<Board> {
-    const { name } = updateBoardDto;
+    const { name, columns } = updateBoardDto;
 
-    if (await this.boardNameAlreadyExists(name)) {
-      throw new ConflictException(`Board with name '${name}' already exists.`);
+    await this.checkNameOrThrow(id, name);
+
+    try {
+      const board = await this.prisma.board.update({
+        where: { id },
+        data: {
+          name,
+          columns: {
+            upsert: columns.map((column) => {
+              Logger.debug(column);
+              return {
+                where: { id: column.id },
+                update: { name: column.name },
+                create: {
+                  name: column.name,
+                  color: this.columnsService.generateColumnColor(),
+                },
+              };
+            }),
+          },
+        },
+      });
+
+      return board;
+    } catch (err) {
+      console.log(err);
     }
-
-    const board = await this.prisma.board.update({
-      where: { id },
-      data: updateBoardDto,
-    });
-
-    return board;
   }
 
   async remove(id: number): Promise<void> {
@@ -87,6 +105,7 @@ export class BoardsService {
     try {
       const columns = await this.prisma.column.findMany({
         where: { boardId: id },
+        orderBy: { id: 'asc' },
       });
 
       return columns;
@@ -102,21 +121,35 @@ export class BoardsService {
 
   /* ---------------------------- Private methods --------------------------- */
 
-  private async boardNameAlreadyExists(name: string): Promise<boolean> {
+  private async boardNameAlreadyExists(
+    name: string,
+    id?: number,
+  ): Promise<boolean> {
     const board = await this.prisma.board.findFirst({ where: { name } });
-
-    return Boolean(board);
+    return id ? board && board.id !== id : !!board;
   }
 
   private getUniqueColumnNames(columns: CreateColumnDto[]): { name: string }[] {
     const filteredColumns: { name: string }[] = []; // Remove duplicates
 
-    Object.values(columns).forEach((column) => {
-      if (!filteredColumns.find((c) => c.name === column.name)) {
-        filteredColumns.push(column);
-      }
-    });
+    Object.values(columns)
+      .filter((column) => column.name !== '')
+      .forEach((column) => {
+        if (!filteredColumns.find((c) => c.name === column.name)) {
+          filteredColumns.push(column);
+        }
+      });
 
     return filteredColumns;
+  }
+
+  private async checkNameOrThrow(id: number, name: string): Promise<void> {
+    const foundBoard = await this.findOne(id);
+    if (
+      !(foundBoard.name === name) &&
+      (await this.boardNameAlreadyExists(name))
+    ) {
+      throw new ConflictException(`Board with name '${name}' already exists.`);
+    }
   }
 }
