@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ColumnsService } from '../columns/columns.service';
-// import { SubtasksService } from '../subtasks/subtasks.service';
 import { Task } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { SubtasksService } from 'src/subtasks/subtasks.service';
@@ -121,7 +120,10 @@ export class TasksService {
   async findColumnTasks(columnId: number): Promise<Task[]> {
     const column = await this.columnsService.findOne(columnId);
 
-    return this.prisma.task.findMany({ where: { columnId: column.id } });
+    return this.prisma.task.findMany({
+      where: { columnId: column.id },
+      orderBy: { id: 'asc' },
+    });
   }
 
   /* ---------------------------- Private methods --------------------------- */

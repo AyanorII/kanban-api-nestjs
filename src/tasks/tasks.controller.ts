@@ -8,9 +8,9 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Task } from '@prisma/client';
-// import { SubtasksService } from '../subtasks/subtasks.service';
 import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
+import { Task, Subtask } from '@prisma/client';
+import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
@@ -19,7 +19,7 @@ import { TasksService } from './tasks.service';
 @Controller('tasks')
 export class TasksController {
   constructor(
-    // private subtasksService: SubtasksService,
+    private subtasksService: SubtasksService,
     private tasksService: TasksService,
   ) {}
 
@@ -53,8 +53,8 @@ export class TasksController {
     return this.tasksService.remove(id);
   }
 
-  // @Get(':id/subtasks')
-  // async findTaskSubtasks(@Param('id') id: number): Promise<Subtask[]> {
-  //   return this.subtasksService.findTaskSubtasks(id);
-  // }
+  @Get(':id/subtasks')
+  async findTaskSubtasks(@Param('id') id: number): Promise<Subtask[]> {
+    return this.subtasksService.findTaskSubtasks(id);
+  }
 }

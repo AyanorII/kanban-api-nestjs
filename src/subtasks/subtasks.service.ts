@@ -110,4 +110,21 @@ export class SubtasksService {
       }
     }
   }
+
+  async findTaskSubtasks(id: number): Promise<Subtask[]> {
+    try {
+      const subtasks = await this.prisma.subtask.findMany({
+        where: { taskId: id },
+        orderBy: { id: 'asc' },
+      });
+
+      if (subtasks.length === 0) {
+        await this.tasksService.findOne(id);
+      }
+
+      return subtasks;
+    } catch (error) {
+      throw new NotFoundException(`Task with ID: '${id}' not found.`);
+    }
+  }
 }
