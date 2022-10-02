@@ -4,17 +4,21 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { SeedService } from '../seed/seed.service';
 import { AuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService, private prisma: PrismaService) {}
+  constructor(
+    private jwtService: JwtService,
+    private prisma: PrismaService,
+    private seedService: SeedService,
+  ) {}
 
-  async signup(authDto: AuthDto): Promise<User> {
+  async signup(authDto: AuthDto): Promise<void> {
     const { email, password } = authDto;
 
     try {
@@ -25,7 +29,7 @@ export class AuthService {
         data: { email, password: hashedPassword },
       });
 
-      return user;
+      await this.seedService.seed(user);
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === 'P2002') {
@@ -41,9 +45,8 @@ export class AuthService {
     const { email, password } = authDto;
 
     const user = await this.prisma.user.findUnique({ where: { email } });
-    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!user || !isPasswordValid) {
+    if (!user || !this.isPasswordValid(password, user)) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -51,5 +54,14 @@ export class AuthService {
     const accessToken = await this.jwtService.sign(payload);
 
     return { accessToken };
+  }
+
+  /* ---------------------------- Private methods --------------------------- */
+
+  private async isPasswordValid(
+    password: string,
+    user: AuthDto,
+  ): Promise<boolean> {
+    return user ? bcrypt.compare(password, user.password) : false;
   }
 }

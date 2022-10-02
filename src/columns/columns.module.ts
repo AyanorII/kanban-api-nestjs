@@ -1,15 +1,20 @@
 import { Module } from '@nestjs/common';
-import { BoardsModule } from '../boards/boards.module';
 import { TasksService } from 'src/tasks/tasks.service';
+import { BoardsService } from '../boards/boards.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { SubtasksService } from '../subtasks/subtasks.service';
 import { ColumnsController } from './columns.controller';
 import { ColumnsService } from './columns.service';
-import { SubtasksService } from '../subtasks/subtasks.service';
 
 @Module({
-  imports: [BoardsModule],
   controllers: [ColumnsController],
-  providers: [ColumnsService, TasksService, SubtasksService, PrismaService],
+  providers: [
+    BoardsService,
+    ColumnsService,
+    TasksService,
+    SubtasksService,
+    PrismaService,
+  ],
   exports: [ColumnsService],
 })
 export class ColumnsModule {}
