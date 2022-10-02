@@ -28,22 +28,26 @@ export class BoardsService {
 
     const filteredColumns = this.getUniqueColumnNames(columns);
 
-    const board = await this.prisma.board.create({
-      data: {
-        name,
-        columns: {
-          createMany: {
-            data: filteredColumns.map(({ name }) => ({
-              name,
-              color: this.columnsService.generateColumnColor(),
-            })),
+    try {
+      const board = await this.prisma.board.create({
+        data: {
+          name,
+          columns: {
+            createMany: {
+              data: filteredColumns.map(({ name }) => ({
+                name,
+                color: this.columnsService.generateColumnColor(),
+              })),
+            },
           },
         },
-      },
-      include: { columns: true },
-    });
+        include: { columns: true },
+      });
 
-    return board;
+      return board;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async findAll(): Promise<Board[]> {
@@ -79,7 +83,7 @@ export class BoardsService {
             upsert: columns.map((column) => {
               Logger.debug(column);
               return {
-                where: { id: column.id },
+                where: { id: column.id || -1 }, // Using -1 as a placeholder for a non-existent ID
                 update: { name: column.name },
                 create: {
                   name: column.name,
