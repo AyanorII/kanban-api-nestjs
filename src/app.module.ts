@@ -7,6 +7,7 @@ import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
 import { SubtasksModule } from './subtasks/subtasks.module';
 import { TasksModule } from './tasks/tasks.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TasksModule } from './tasks/tasks.module';
     ColumnsModule,
     TasksModule,
     SubtasksModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
