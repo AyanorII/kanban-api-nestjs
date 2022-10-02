@@ -29,14 +29,14 @@ export class BoardsController {
     @Body() createBoardDto: CreateBoardDto,
     @GetUser() user: User,
   ): Promise<Board> {
-    const board = await this.boardsService.create(createBoardDto);
+    const board = await this.boardsService.create(createBoardDto, user);
 
     return board;
   }
 
   @Get()
   async findAll(@GetUser() user: User): Promise<Board[]> {
-    const boards = await this.boardsService.findAll();
+    const boards = await this.boardsService.findAll(user);
 
     return boards;
   }
@@ -46,7 +46,7 @@ export class BoardsController {
     @Param('id') id: number,
     @GetUser() user: User,
   ): Promise<Board> {
-    return this.boardsService.findOne(id);
+    return this.boardsService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -55,7 +55,7 @@ export class BoardsController {
     @Body() updateBoardDto: UpdateBoardDto,
     @GetUser() user: User,
   ): Promise<Board> {
-    return this.boardsService.update(id, updateBoardDto);
+    return this.boardsService.update(id, updateBoardDto, user);
   }
 
   @HttpCode(204)
@@ -69,6 +69,6 @@ export class BoardsController {
     @Param('id') id: number,
     @GetUser() user: User,
   ): Promise<Column[]> {
-    return this.boardsService.findBoardColumns(id);
+    return this.boardsService.findBoardColumns(id, user);
   }
 }

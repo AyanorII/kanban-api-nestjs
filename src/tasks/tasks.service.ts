@@ -1,9 +1,11 @@
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Task } from '@prisma/client';
+import { Task, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { SubtasksService } from 'src/subtasks/subtasks.service';
 import { ColumnsService } from '../columns/columns.service';
@@ -17,19 +19,17 @@ export class TasksService {
   constructor(
     private prisma: PrismaService,
     private columnsService: ColumnsService,
+    @Inject(forwardRef(() => SubtasksService))
     private subtasksService: SubtasksService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const { title, description, status, columnId } = createTaskDto;
-    let { subtasks } = createTaskDto;
-    subtasks = subtasks.filter((subtask) => subtask.title !== '');
+  async create(createTaskDto: CreateTaskDto, user: User): Promise<Task> {
+    const { title, description, status, subtasks, columnId } = createTaskDto;
 
     if (status === '') {
       throw new ConflictException(`Status cannot be empty.`);
     }
-
-    await this.checkStatusAndColumnMatch(status, columnId);
+    await this.checkStatusAndColumnMatch(status, columnId, user);
 
     try {
       const task = await this.prisma.task.create({
@@ -38,7 +38,18 @@ export class TasksService {
           description,
           status,
           columnId,
-          subtasks: { createMany: { data: subtasks } },
+          userId: user.id,
+          subtasks: {
+            createMany: {
+              data: subtasks
+                .filter((subtask) => subtask.title !== '')
+                .map(({ title, completed }) => ({
+                  title,
+                  completed,
+                  userId: user.id,
+                })),
+            },
+          },
         },
         include: { subtasks: true },
       });
@@ -55,8 +66,11 @@ export class TasksService {
     }
   }
 
-  async findAll(): Promise<Task[]> {
-    return this.prisma.task.findMany({ orderBy: { id: 'asc' } });
+  async findAll(user: User): Promise<Task[]> {
+    return this.prisma.task.findMany({
+      where: { userId: user.id },
+      orderBy: { id: 'asc' },
+    });
   }
 
   /**
@@ -64,9 +78,9 @@ export class TasksService {
    * @param id The task instance ID.
    * @returns A task entity instance or throws a NotFoundException if no task was found with the given ID.
    */
-  async findOne(id: number): Promise<Task> {
-    const task = await this.prisma.task.findUnique({
-      where: { id },
+  async findOne(id: number, user: User): Promise<Task> {
+    const task = await this.prisma.task.findFirst({
+      where: { id, userId: user.id },
       include: { subtasks: true, column: true },
     });
 
@@ -77,11 +91,15 @@ export class TasksService {
     return task;
   }
 
-  async updateTask(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
+  async updateTask(
+    id: number,
+    updateTaskDto: UpdateTaskDto,
+    user: User,
+  ): Promise<Task> {
     const { subtasks, columnId, status, ...rest } = updateTaskDto;
 
     if (columnId && status) {
-      await this.checkStatusAndColumnMatch(status, columnId);
+      await this.checkStatusAndColumnMatch(status, columnId, user);
     }
 
     try {
@@ -91,7 +109,7 @@ export class TasksService {
         include: { subtasks: true },
       });
 
-      await this.updateSubtasks(subtasks, task);
+      await this.updateSubtasks(subtasks, task, user);
 
       return task;
     } catch (error) {
@@ -147,11 +165,11 @@ export class TasksService {
     }
   }
 
-  async findColumnTasks(columnId: number): Promise<Task[]> {
-    const column = await this.columnsService.findOne(columnId);
+  async findColumnTasks(columnId: number, user: User): Promise<Task[]> {
+    const column = await this.columnsService.findOne(columnId, user);
 
     return this.prisma.task.findMany({
-      where: { columnId: column.id },
+      where: { columnId: column.id, userId: user.id },
       orderBy: { id: 'asc' },
     });
   }
@@ -161,6 +179,7 @@ export class TasksService {
   private async updateSubtasks(
     subtasks: UpdateTaskDto['subtasks'],
     task: Task,
+    user: User,
   ) {
     if (subtasks?.length >= 1) {
       const subtasksPromise = subtasks
@@ -171,10 +190,13 @@ export class TasksService {
           if (id) {
             await this.subtasksService.update(id, { title, completed });
           } else {
-            await this.subtasksService.create({
-              title,
-              taskId: task.id,
-            });
+            await this.subtasksService.create(
+              {
+                title,
+                taskId: task.id,
+              },
+              user,
+            );
           }
         });
 
@@ -186,8 +208,9 @@ export class TasksService {
   private async checkStatusAndColumnMatch(
     status: string,
     columnId: number,
+    user: User,
   ): Promise<boolean> {
-    const column = await this.columnsService.findOne(columnId);
+    const column = await this.columnsService.findOne(columnId, user);
     if (status !== column.name) {
       throw new ConflictException(
         `Column name: '${column.name}' does not match the status: '${status}'.`,

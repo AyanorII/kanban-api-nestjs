@@ -10,7 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
-import { Subtask } from '@prisma/client';
+import { Subtask, User } from '@prisma/client';
+import { GetUser } from 'src/get-user.decorator';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { SubtasksService } from './subtasks.service';
@@ -21,18 +22,24 @@ export class SubtasksController {
   constructor(private readonly subtasksService: SubtasksService) {}
 
   @Post()
-  async create(@Body() createSubtaskDto: CreateSubtaskDto): Promise<Subtask> {
-    return this.subtasksService.create(createSubtaskDto);
+  async create(
+    @Body() createSubtaskDto: CreateSubtaskDto,
+    @GetUser() user: User,
+  ): Promise<Subtask> {
+    return this.subtasksService.create(createSubtaskDto, user);
   }
 
   @Get()
-  async findAll(): Promise<Subtask[]> {
-    return this.subtasksService.findAll();
+  async findAll(@GetUser() user: User): Promise<Subtask[]> {
+    return this.subtasksService.findAll(user);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number): Promise<Subtask> {
-    return this.subtasksService.findOne(id);
+  async findOne(
+    @Param('id') id: number,
+    @GetUser() user: User,
+  ): Promise<Subtask> {
+    return this.subtasksService.findOne(id, user);
   }
 
   @Patch(':id')

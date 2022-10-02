@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Subtask } from '@prisma/client';
+import { Subtask, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from '../tasks/tasks.service';
@@ -21,10 +21,16 @@ export class SubtasksService {
     private prisma: PrismaService,
   ) {}
 
-  async create(createSubtaskDto: CreateSubtaskDto): Promise<Subtask> {
+  async create(
+    createSubtaskDto: CreateSubtaskDto,
+    user: User,
+  ): Promise<Subtask> {
     try {
       const subtask = await this.prisma.subtask.create({
-        data: { ...createSubtaskDto },
+        data: {
+          ...createSubtaskDto,
+          userId: user.id,
+        },
       });
 
       return subtask;
@@ -39,13 +45,16 @@ export class SubtasksService {
     }
   }
 
-  async findAll(): Promise<Subtask[]> {
-    return this.prisma.subtask.findMany({ orderBy: { id: 'asc' } });
+  async findAll(user: User): Promise<Subtask[]> {
+    return this.prisma.subtask.findMany({
+      where: { userId: user.id },
+      orderBy: { id: 'asc' },
+    });
   }
 
-  async findOne(id: number): Promise<Subtask> {
-    const subtask = await this.prisma.subtask.findUnique({
-      where: { id },
+  async findOne(id: number, user: User): Promise<Subtask> {
+    const subtask = await this.prisma.subtask.findFirst({
+      where: { id, userId: user.id },
       include: { task: true },
     });
 
@@ -111,7 +120,7 @@ export class SubtasksService {
     }
   }
 
-  async findTaskSubtasks(id: number): Promise<Subtask[]> {
+  async findTaskSubtasks(id: number, user: User): Promise<Subtask[]> {
     try {
       const subtasks = await this.prisma.subtask.findMany({
         where: { taskId: id },
@@ -119,7 +128,7 @@ export class SubtasksService {
       });
 
       if (subtasks.length === 0) {
-        await this.tasksService.findOne(id);
+        await this.tasksService.findOne(id, user);
       }
 
       return subtasks;

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 // import { TasksService } from '../tasks/tasks.service';
-import { Column } from '@prisma/client';
+import { Column, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateColumnDto } from './dto/create-column.dto';
@@ -14,7 +14,7 @@ import { UpdateColumnDto } from './dto/update-column.dto';
 export class ColumnsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createColumnDto: CreateColumnDto): Promise<Column> {
+  async create(createColumnDto: CreateColumnDto, user: User): Promise<Column> {
     const { name, boardId } = createColumnDto;
 
     if (await this.columnAlreadyExists(name, boardId)) {
@@ -23,7 +23,12 @@ export class ColumnsService {
 
     try {
       const column = await this.prisma.column.create({
-        data: { name, boardId, color: this.generateColumnColor() },
+        data: {
+          name,
+          boardId,
+          color: this.generateColumnColor(),
+          userId: user.id,
+        },
       });
 
       return column;
@@ -39,13 +44,17 @@ export class ColumnsService {
     }
   }
 
-  async findAll(): Promise<Column[]> {
-    return this.prisma.column.findMany({ orderBy: { id: 'asc' } });
+  async findAll(user: User): Promise<Column[]> {
+    const { id } = user;
+    return this.prisma.column.findMany({
+      where: { userId: id },
+      orderBy: { id: 'asc' },
+    });
   }
 
-  async findOne(id: number): Promise<Column> {
-    const column = await this.prisma.column.findUnique({
-      where: { id },
+  async findOne(id: number, user: User): Promise<Column> {
+    const column = await this.prisma.column.findFirst({
+      where: { id, userId: user.id },
       include: {
         tasks: true,
         board: true,

@@ -9,7 +9,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Column, Task } from '@prisma/client';
+import { Column, Task, User } from '@prisma/client';
+import { GetUser } from 'src/get-user.decorator';
 import { TasksService } from 'src/tasks/tasks.service';
 import { ColumnsService } from './columns.service';
 import { CreateColumnDto } from './dto/create-column.dto';
@@ -24,21 +25,27 @@ export class ColumnsController {
   ) {}
 
   @Post()
-  async create(@Body() createColumnDto: CreateColumnDto): Promise<Column> {
-    const column = await this.columnsService.create(createColumnDto);
+  async create(
+    @Body() createColumnDto: CreateColumnDto,
+    @GetUser() user: User,
+  ): Promise<Column> {
+    const column = await this.columnsService.create(createColumnDto, user);
     return column;
   }
 
   @Get()
-  async findAll(): Promise<Column[]> {
-    const columns = await this.columnsService.findAll();
+  async findAll(@GetUser() user: User): Promise<Column[]> {
+    const columns = await this.columnsService.findAll(user);
 
     return columns;
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: number): Promise<Column> {
-    return this.columnsService.findOne(id);
+  async findOne(
+    @Param('id') id: number,
+    @GetUser() user: User,
+  ): Promise<Column> {
+    return this.columnsService.findOne(id, user);
   }
 
   @Patch(':id')
@@ -58,7 +65,10 @@ export class ColumnsController {
   }
 
   @Get(':id/tasks')
-  async findColumnTasks(@Param('id') id: number): Promise<Task[]> {
-    return this.tasksService.findColumnTasks(id);
+  async findColumnTasks(
+    @Param('id') id: number,
+    @GetUser() user: User,
+  ): Promise<Task[]> {
+    return this.tasksService.findColumnTasks(id, user);
   }
 }

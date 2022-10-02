@@ -4,7 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Board, Column } from '@prisma/client';
+import { Board, Column, User } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { ColumnsService } from '../columns/columns.service';
 import { CreateColumnDto } from '../columns/dto/create-column.dto';
@@ -19,10 +19,10 @@ export class BoardsService {
     private columnsService: ColumnsService,
   ) {}
 
-  async create(createBoardDto: CreateBoardDto): Promise<Board> {
+  async create(createBoardDto: CreateBoardDto, user: User): Promise<Board> {
     const { name, columns } = createBoardDto;
 
-    if (await this.boardNameAlreadyExists(name)) {
+    if (await this.boardNameAlreadyExists(name, user)) {
       throw new ConflictException(`Board with name '${name}' already exists.`);
     }
 
@@ -32,11 +32,13 @@ export class BoardsService {
       const board = await this.prisma.board.create({
         data: {
           name,
+          userId: user.id,
           columns: {
             createMany: {
               data: filteredColumns.map(({ name }) => ({
                 name,
                 color: this.columnsService.generateColumnColor(),
+                userId: user.id,
               })),
             },
           },
@@ -50,13 +52,16 @@ export class BoardsService {
     }
   }
 
-  async findAll(): Promise<Board[]> {
-    return this.prisma.board.findMany({ orderBy: { id: 'asc' } });
+  async findAll(user: User): Promise<Board[]> {
+    return this.prisma.board.findMany({
+      where: { userId: user.id },
+      orderBy: { id: 'asc' },
+    });
   }
 
-  async findOne(id: number): Promise<Board> {
-    const board = await this.prisma.board.findUnique({
-      where: { id },
+  async findOne(id: number, user: User): Promise<Board> {
+    const board = await this.prisma.board.findFirst({
+      where: { id, userId: user.id },
       include: {
         columns: true,
       },
@@ -69,10 +74,18 @@ export class BoardsService {
     return board;
   }
 
-  async update(id: number, updateBoardDto: UpdateBoardDto): Promise<Board> {
+  async update(
+    id: number,
+    updateBoardDto: UpdateBoardDto,
+    user: User,
+  ): Promise<Board> {
     const { name, columns } = updateBoardDto;
 
-    await this.checkNameOrThrow(id, name);
+    if (!columns) {
+      throw new ConflictException('Columns are required.');
+    }
+
+    await this.checkNameOrThrow(id, name, user);
 
     try {
       const board = await this.prisma.board.update({
@@ -88,6 +101,7 @@ export class BoardsService {
                 create: {
                   name: column.name,
                   color: this.columnsService.generateColumnColor(),
+                  userId: user.id,
                 },
               };
             }),
@@ -105,10 +119,10 @@ export class BoardsService {
     await this.prisma.board.delete({ where: { id } });
   }
 
-  async findBoardColumns(id: number): Promise<Column[]> {
+  async findBoardColumns(id: number, user: User): Promise<Column[]> {
     try {
       const columns = await this.prisma.column.findMany({
-        where: { boardId: id },
+        where: { boardId: id, userId: user.id },
         orderBy: { id: 'asc' },
       });
 
@@ -127,9 +141,12 @@ export class BoardsService {
 
   private async boardNameAlreadyExists(
     name: string,
+    user: User,
     id?: number,
   ): Promise<boolean> {
-    const board = await this.prisma.board.findFirst({ where: { name } });
+    const board = await this.prisma.board.findFirst({
+      where: { name, userId: user.id },
+    });
     return id ? board && board.id !== id : !!board;
   }
 
@@ -147,11 +164,15 @@ export class BoardsService {
     return filteredColumns;
   }
 
-  private async checkNameOrThrow(id: number, name: string): Promise<void> {
-    const foundBoard = await this.findOne(id);
+  private async checkNameOrThrow(
+    id: number,
+    name: string,
+    user: User,
+  ): Promise<void> {
+    const foundBoard = await this.findOne(id, user);
     if (
       !(foundBoard.name === name) &&
-      (await this.boardNameAlreadyExists(name))
+      (await this.boardNameAlreadyExists(name, user))
     ) {
       throw new ConflictException(`Board with name '${name}' already exists.`);
     }
