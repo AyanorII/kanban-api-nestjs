@@ -21,7 +21,13 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const { title, description, status, columnId, subtasks } = createTaskDto;
+    const { title, description, status, columnId } = createTaskDto;
+    let { subtasks } = createTaskDto;
+    subtasks = subtasks.filter((subtask) => subtask.title !== '');
+
+    if (status === '') {
+      throw new ConflictException(`Status cannot be empty.`);
+    }
 
     await this.checkStatusAndColumnMatch(status, columnId);
 
