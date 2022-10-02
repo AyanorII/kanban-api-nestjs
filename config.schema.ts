@@ -10,4 +10,5 @@ export const configSchemaValidation = Joi.object({
   API_URL: Joi.string().required(),
   NODE_ENV: Joi.string().required(),
   DATABASE_URL: Joi.string().required(),
+  JWT_SECRET: Joi.string().required().min(64),
 });
