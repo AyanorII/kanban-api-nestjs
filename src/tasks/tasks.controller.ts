@@ -9,9 +9,10 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
-import { Task, Subtask } from '@prisma/client';
+import { Subtask, Task } from '@prisma/client';
 import { SubtasksService } from '../subtasks/subtasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskStatusColumnDto } from './dto/update-task-status-column.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 
@@ -44,6 +45,14 @@ export class TasksController {
     @Body() updateTaskDto: UpdateTaskDto,
   ): Promise<Task> {
     return this.tasksService.updateTask(id, updateTaskDto);
+  }
+
+  @Patch(':id/status')
+  async createTaskSubtask(
+    @Param('id') id: number,
+    @Body() updateTaskStatusColumnDto: UpdateTaskStatusColumnDto,
+  ): Promise<Task> {
+    return this.tasksService.updateTaskStatus(id, updateTaskStatusColumnDto);
   }
 
   @ApiNoContentResponse()

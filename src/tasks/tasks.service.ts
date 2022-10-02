@@ -3,12 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ColumnsService } from '../columns/columns.service';
 import { Task } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { SubtasksService } from 'src/subtasks/subtasks.service';
+import { ColumnsService } from '../columns/columns.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskStatusColumnDto } from './dto/update-task-status-column.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
@@ -21,6 +22,8 @@ export class TasksService {
 
   async create(createTaskDto: CreateTaskDto): Promise<Task> {
     const { title, description, status, columnId, subtasks } = createTaskDto;
+
+    await this.checkStatusAndColumnMatch(status, columnId);
 
     try {
       const task = await this.prisma.task.create({
@@ -71,14 +74,8 @@ export class TasksService {
   async updateTask(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
     const { subtasks, columnId, status, ...rest } = updateTaskDto;
 
-    // Checks if columnId and status are present, and if so, checks if column name and status match, if not, throws a ConflictException.
     if (columnId && status) {
-      const column = await this.columnsService.findOne(columnId);
-      if (column.name !== status) {
-        throw new ConflictException(
-          `Column name: '${column.name}' does not match the status: '${status}'.`,
-        );
-      }
+      await this.checkStatusAndColumnMatch(status, columnId);
     }
 
     try {
@@ -99,6 +96,33 @@ export class TasksService {
         if (error.code === 'P2003') {
           throw new NotFoundException(
             `Column with ID: ${updateTaskDto.columnId} does not exist.`,
+          );
+        }
+      }
+    }
+  }
+
+  async updateTaskStatus(
+    id: number,
+    updateTaskStatusColumnDto: UpdateTaskStatusColumnDto,
+  ): Promise<Task> {
+    const { status, columnId } = updateTaskStatusColumnDto;
+
+    try {
+      const task = await this.prisma.task.update({
+        where: { id },
+        data: { status, columnId },
+        include: { subtasks: true, column: true },
+      });
+
+      return task;
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === 'P2025') {
+          throw new NotFoundException(`Task with ID: ${id} not found.`);
+        } else if (err.code === 'P2003') {
+          throw new NotFoundException(
+            `Column with ID: ${columnId} does not exist.`,
           );
         }
       }
@@ -151,5 +175,18 @@ export class TasksService {
       const subtasksUpdated = await Promise.all(subtasksPromise);
       return subtasksUpdated;
     }
+  }
+
+  private async checkStatusAndColumnMatch(
+    status: string,
+    columnId: number,
+  ): Promise<boolean> {
+    const column = await this.columnsService.findOne(columnId);
+    if (status !== column.name) {
+      throw new ConflictException(
+        `Column name: '${column.name}' does not match the status: '${status}'.`,
+      );
+    }
+    return true;
   }
 }
