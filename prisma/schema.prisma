@@ -11,6 +11,8 @@ model Board {
   id      Int      @id @default(autoincrement())
   name    String   @db.VarChar
   columns Column[]
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  userId  Int
 }
 
 model Column {
@@ -20,6 +22,8 @@ model Column {
   boardId Int
   board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tasks   Task[]
+  user    User   @relation(fields: [userId], references: [id])
+  userId  Int
 }
 
 model Subtask {
@@ -28,6 +32,8 @@ model Subtask {
   completed Boolean @default(false)
   taskId    Int
   task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
 }
 
 model Task {
@@ -38,6 +44,8 @@ model Task {
   columnId    Int
   column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   subtasks    Subtask[]
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
 }
 
 model User {
@@ -45,4 +53,8 @@ model User {
   email    String    @unique
   password String
   photo    String?
+  boards   Board[]
+  columns  Column[]
+  tasks    Task[]
+  subtasks Subtask[]
 }
