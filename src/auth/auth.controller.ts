@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
+import { AccessToken, AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 
 @ApiTags('Auth')
@@ -10,13 +10,13 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('signup')
-  async signup(@Body() authDto: AuthDto) {
+  async signup(@Body() authDto: AuthDto): Promise<AccessToken> {
     return this.authService.signup(authDto);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async login(@Body() authDto: AuthDto) {
+  async login(@Body() authDto: AuthDto): Promise<AccessToken> {
     return this.authService.login(authDto);
   }
 }

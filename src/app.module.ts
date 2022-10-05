@@ -3,12 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { configSchemaValidation } from '../config.schema';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
+import { SeedModule } from './seed/seed.module';
 import { SubtasksModule } from './subtasks/subtasks.module';
 import { TasksModule } from './tasks/tasks.module';
-import { AuthModule } from './auth/auth.module';
-import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
