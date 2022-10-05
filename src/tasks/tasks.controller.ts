@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
 import { Subtask, Task, User } from '@prisma/client';
@@ -16,8 +17,10 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumnDto } from './dto/update-task-status-column.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Tasks')
+@UseGuards(AuthGuard('jwt'))
 @Controller('tasks')
 export class TasksController {
   constructor(

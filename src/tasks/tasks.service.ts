@@ -13,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskStatusColumnDto } from './dto/update-task-status-column.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class TasksService {
@@ -41,13 +42,16 @@ export class TasksService {
           userId: user.id,
           subtasks: {
             createMany: {
-              data: subtasks
-                .filter((subtask) => subtask.title !== '')
-                .map(({ title, completed }) => ({
-                  title,
-                  completed,
-                  userId: user.id,
-                })),
+              data:
+                subtasks.length > 0
+                  ? subtasks
+                      .filter((subtask) => subtask.title !== '')
+                      .map(({ title, completed }) => ({
+                        title,
+                        completed,
+                        userId: user.id,
+                      }))
+                  : [],
             },
           },
         },
@@ -56,6 +60,7 @@ export class TasksService {
 
       return task;
     } catch (error) {
+      Logger.verbose(error);
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2003') {
           throw new NotFoundException(

@@ -7,7 +7,9 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { Column, Task, User } from '@prisma/client';
 import { GetUser } from 'src/get-user.decorator';
@@ -18,6 +20,7 @@ import { UpdateColumnDto } from './dto/update-column.dto';
 
 @ApiTags('Columns')
 @Controller('columns')
+@UseGuards(AuthGuard('jwt'))
 export class ColumnsController {
   constructor(
     private columnsService: ColumnsService,

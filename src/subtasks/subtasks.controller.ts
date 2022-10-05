@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiNoContentResponse, ApiTags } from '@nestjs/swagger';
 import { Subtask, User } from '@prisma/client';
@@ -15,8 +16,10 @@ import { GetUser } from 'src/get-user.decorator';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
 import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 import { SubtasksService } from './subtasks.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Subtasks')
+@UseGuards(AuthGuard('jwt'))
 @Controller('subtasks')
 export class SubtasksController {
   constructor(private readonly subtasksService: SubtasksService) {}
