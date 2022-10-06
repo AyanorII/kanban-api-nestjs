@@ -11,5 +11,5 @@ export const configSchemaValidation = Joi.object({
   NODE_ENV: Joi.string().required(),
   DATABASE_URL: Joi.string().required(),
   JWT_SECRET: Joi.string().required().min(64),
-  CLIENT_URL: Joi.string().required(),
+  CORS_ORIGIN: Joi.string().required(),
 });
