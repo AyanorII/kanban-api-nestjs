@@ -56,13 +56,21 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user || !(await this.isPasswordValid(password, user))) {
-      throw new UnauthorizedException('Invalid credentials hihi');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     const accessToken = await this.createAccessToken(user);
     return accessToken;
   }
 
+  googleLogin(req) {
+    const { user } = req;
+    if (!user) {
+      return { error: 'User not found', status: 404 };
+    }
+
+    return user;
+  }
   /* ---------------------------- Private methods --------------------------- */
 
   private async isPasswordValid(
