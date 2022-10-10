@@ -1,3 +1,4 @@
+import { IsOptional } from '@nestjs/class-validator';
 import { Injectable } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, Matches } from 'class-validator';
@@ -12,4 +13,9 @@ export class AuthDto {
   @IsString()
   @Matches(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/)
   password: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  photo?: string;
 }
