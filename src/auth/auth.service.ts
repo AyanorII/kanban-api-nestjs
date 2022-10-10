@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeedService } from '../seed/seed.service';
 import { AuthDto } from './dto/auth.dto';
+import { GoogleUser } from './interfaces';
 
 export interface AccessToken {
   accessToken: string;
@@ -24,14 +25,14 @@ export class AuthService {
   ) {}
 
   async signup(authDto: AuthDto): Promise<AccessToken> {
-    const { email, password } = authDto;
+    const { password, ...rest } = authDto;
 
     try {
       const salt = await bcrypt.genSalt();
       const hashedPassword: string = await bcrypt.hash(password, salt);
 
       const user = await this.prisma.user.create({
-        data: { email, password: hashedPassword },
+        data: { password: hashedPassword, ...rest },
       });
 
       // Creates boards, columns, tasks and subtasks for the new user.
@@ -63,13 +64,27 @@ export class AuthService {
     return accessToken;
   }
 
-  googleLogin(req) {
-    const { user } = req;
+  async googleLogin(req) {
+    const user = req.user as GoogleUser;
     if (!user) {
       return { error: 'User not found', status: 404 };
     }
 
-    return user;
+    const userAlreadyExists = await this.prisma.user.findUnique({
+      where: { email: user.email },
+    });
+
+    if (!userAlreadyExists) {
+      const accessToken = await this.signup({
+        email: user.email,
+        password: this.randomPassword(),
+        photo: user.picture,
+      });
+
+      return accessToken;
+    }
+
+    return user.accessToken;
   }
   /* ---------------------------- Private methods --------------------------- */
 
@@ -84,5 +99,9 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
     const accessToken = await this.jwtService.sign(payload);
     return { accessToken };
+  }
+
+  private randomPassword(): string {
+    return Math.random().toString(36).slice(-8);
   }
 }
