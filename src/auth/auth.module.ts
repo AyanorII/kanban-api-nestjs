@@ -11,7 +11,6 @@ import { SubtasksModule } from '../subtasks/subtasks.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { GoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 @Module({
   imports: [
@@ -35,10 +34,9 @@ import { JwtStrategy } from './jwt.strategy';
     AuthService,
     PrismaService,
     JwtStrategy,
-    GoogleStrategy,
     ConfigService,
     SeedService,
   ],
-  exports: [JwtStrategy, PassportModule, GoogleStrategy],
+  exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}

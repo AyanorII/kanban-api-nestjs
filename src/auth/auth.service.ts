@@ -10,7 +10,6 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { SeedService } from '../seed/seed.service';
 import { AuthDto } from './dto/auth.dto';
-import { GoogleUser } from './interfaces';
 
 export interface AccessToken {
   accessToken: string;
@@ -64,27 +63,19 @@ export class AuthService {
     return accessToken;
   }
 
-  async googleLogin(req) {
-    const user = req.user as GoogleUser;
+  async providerAuth({ email, password }: AuthDto) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return { error: 'User not found', status: 404 };
-    }
-
-    const userAlreadyExists = await this.prisma.user.findUnique({
-      where: { email: user.email },
-    });
-
-    if (!userAlreadyExists) {
-      const accessToken = await this.signup({
-        email: user.email,
-        password: this.randomPassword(),
-        photo: user.picture,
+      const accessToken = this.signup({
+        email,
+        password,
       });
 
       return accessToken;
     }
 
-    return user.accessToken;
+    const accessToken = await this.createAccessToken(user);
+    return accessToken;
   }
   /* ---------------------------- Private methods --------------------------- */
 
@@ -99,9 +90,5 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
     const accessToken = await this.jwtService.sign(payload);
     return { accessToken };
-  }
-
-  private randomPassword(): string {
-    return Math.random().toString(36).slice(-8);
   }
 }

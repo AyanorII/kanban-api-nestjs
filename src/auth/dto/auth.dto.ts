@@ -11,7 +11,7 @@ export class AuthDto {
 
   @ApiProperty()
   @IsString()
-  @Matches(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/)
+  @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
   password: string;
 
   @ApiProperty()
